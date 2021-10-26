@@ -1,119 +1,221 @@
-estimateEffects <-
-function(frontier.object,
-         my.form,
-         prop.estimated = 1,
-         mod.dependence.formula = NULL,
-         continuous.vars = NA,
-         seed = 1,
-         model.dependence.ests = 100,
-         means.as.cutpoints = TRUE,
-         alpha=0.95){
-    
-    set.seed(seed)
-    
-    # These are the points that we'll estimate
-    point.inds <- sort(sample(1:length(frontier.object$frontier$Xs),
-                              round(length(frontier.object$frontier$Xs) * prop.estimated)))
-    coefs <- vector(mode="list", length = length(point.inds))
-    CIs <- vector(mode="list", length= length(point.inds))
-    mod.dependence <- vector(mode="list", length= length(point.inds))
+estimateEffects <- function(frontier.object,
+                            outcome,
+                            base.form = NULL,
+                            prop.estimated = 1,
+                            method = c("none", "extreme-bounds", "athey-imbens"),
+                            model.dependence.ests = 100,
+                            specifications = NULL,
+                            cutpoints = NULL,
+                            cutpoint.method = c("mean", "median", "segmented"),
+                            seed = NULL,
+                            alpha = 0.05,
+                            verbose = TRUE) {
 
-    outcome <- all.vars(as.formula(my.form))[1]
-    treatment <- frontier.object$treatment
-  
-    if(is.null(mod.dependence.formula)){
-        covs <- frontier.object$match.on
-        specifications <- getSpecifications(covs,
-                                            treatment,
-                                            outcome,
-                                            frontier.object$dataset,
-                                            model.dependence.ests)
-        
-        pb <- txtProgressBar(min = 1, max = length(point.inds), style = 3)
-        for(i in 1:length(point.inds)){
-            this.dat.inds <- unlist(frontier.object$frontier$drop.order[point.inds[i]:length(frontier.object$frontier$drop.order)])
-            dataset <- frontier.object$dataset[this.dat.inds,]
-            
-            this.mod.dependence <- modelDependence(dataset = dataset,
-                                                   treatment = treatment,
-                                                   outcome = outcome,
-                                                   covariates = covs,
-                                                   model.dependence.ests = model.dependence.ests,
-                                                   verbose = FALSE,
-                                                   ratio = frontier.object$ratio,
-                                                   specifications = specifications)
-            
-            if(frontier.object$ratio == 'variable'){
-                w <- makeWeights(dataset, treatment)
-                dataset$w <- w            
-                results <- lm(my.form, dataset, weights = w)
-            } else {
-                results <- lm(my.form, dataset)
-            }
-            
-            coefs[i] <- coef(results)[frontier.object$treatment]
-            CIs[[i]] <- confint(results, level = alpha)[frontier.object$treatment,]       
-            mod.dependence[[i]] <- this.mod.dependence
-            
-            setTxtProgressBar(pb, i)
-        }
-        close(pb)
-        
-        return(list(Xs = frontier.object$frontier$Xs[point.inds], coefs = unlist(coefs), CIs = CIs, mod.dependence = mod.dependence))
-        
-    } else {
-        if(!is.na(continuous.vars[1])){
-            if(means.as.cutpoints){
-                cutpoints <- lapply(continuous.vars, function(x) mean(frontier.object$dataset[[x]]))
-                names(cutpoints) <- continuous.vars
-            } else {
-                cutpoints <- getCutpointList(frontier.object$dataset, mod.dependence.formula, continuous.vars)
-            }
-        } else{ cutpoints <- NA }
-        
-        covs <- strsplit(as.character(mod.dependence.formula[3]), '\\+')
-        covs <- unlist(lapply(covs, trim))
-        covs <- covs[!(covs %in% treatment)]
-        
-        pb <- txtProgressBar(min = 1, max = length(point.inds), style = 3)
-        
-        for(i in 1:length(point.inds)){
-            this.dat.inds <- unlist(frontier.object$frontier$drop.order[point.inds[i]:length(frontier.object$frontier$drop.order)])
-            dataset <- frontier.object$dataset[this.dat.inds,]
-            
-            if(frontier.object$ratio == 'variable'){
-                w <- makeWeights(dataset, treatment)
-                dataset$w <- w            
-                results <- lm(my.form, dataset, weights = w)
-            } else {
-                results <- lm(my.form, dataset)
-            }
-            
-            this.mod.dependence <- tryCatch(modelDependence(dataset = dataset,
-                                                            treatment = treatment,
-                                                            base.form = mod.dependence.formula,
-                                                            verbose = FALSE,
-                                                            cutpoints = cutpoints),
-                                            error = function(e) NA
-                                            )
-           
-            if(!is.na(this.mod.dependence[1])){           
-                this.sig.hat <- this.mod.dependence
-                
-            } else{
-                this.sig.hat <- NA
-            }
-            
-            
-            coefs[i] <- coef(results)[frontier.object$treatment]
-            CIs[[i]] <- confint(results, level = alpha)[frontier.object$treatment,]
-            mod.dependence[[i]] <- c(coefs[[i]] - this.sig.hat, coefs[[i]] + this.sig.hat)
-            setTxtProgressBar(pb, i)
-        }
-        close(pb)
-        frontierEstimates <- list(Xs = frontier.object$frontier$Xs[point.inds], coefs = unlist(coefs), CIs = CIs, mod.dependence = mod.dependence)
-        class(frontierEstimates) <- "frontierEstimates"
-        return(frontierEstimates)        
+  set.seed(seed)
+  call <- match.call()
+
+  if (!inherits(frontier.object, "matchFrontier")) {
+    customStop("'frontier.object' must be a matchFrontier object, the output of a call to makeFrontier().", "estimateEffects()")
+  }
+
+  # These are the points that we'll estimate
+  n.steps <-  length(frontier.object$frontier$Xs)
+  point.inds <- unique(round(seq(1, n.steps, length.out = n.steps * prop.estimated)))
+  coefs <- numeric(length(point.inds))
+  CIs <- vector("list", length = length(point.inds))
+  attr(CIs, "CIlevel") <- 1 - alpha
+
+  treatment <- frontier.object$treatment
+  covariates <- frontier.object$match.on
+
+  numeric.covs <- vapply(covariates, function(i) {
+    !is.character(frontier.object$dataset[[i]]) &&
+      !is.factor(frontier.object$dataset[[i]]) &&
+      !is.logical(frontier.object$dataset[[i]])
+  }, logical(1L))
+  frontier.object$dataset[covariates[numeric.covs]] <- scale(frontier.object$dataset[covariates[numeric.covs]])
+
+  #Pre-process modelDependence() args
+  if (is.null(base.form)) {
+    if (missing(outcome)) {
+      customStop("When 'base.form' is omitted, the 'outcome' argument is required.", "estimateEffects()")
     }
+    base.form <- reformulate(treatment, outcome)
+  }
+  else {
+    base.form <- as.formula(base.form)
+    outcome <- all.vars(base.form)[1]
+  }
+  if (!all(setdiff(all.vars(base.form), c(outcome, treatment)) %in% covariates)) {
+    customWarning("not all covariates in 'base.form' were matched on in the original call to makeFrontier().", "estimateEffects()")
+  }
+
+  method <- match_arg(method)
+
+  if (method == "none") {
+    mod.dependence <- mod.dependence.un <- NULL
+  }
+  else if (method == "extreme-bounds") {
+    if (is.null(model.dependence.ests) && is.null(specifications)) {
+      customStop("either 'specifications' or 'model.dependence.ests' must be specified when using the extreme bounds procedure.", "estimateEffects()")
+    }
+
+    if (is.null(specifications)) {
+      if (verbose) cat("Getting extreme bounds model specifications...\n")
+      specifications <- getSpecifications(base.form, covariates, frontier.object$dataset, model.dependence.ests)
+    }
+    else if (!is.list(specifications) ||
+             !all(vapply(specifications, function(s) {
+               inherits(s, "formula") ||
+                 (is.character(s) && length(s) == 1 && is.call(ff <- str2lang(s)) &&
+                  is.symbol(c. <- ff[[1L]]) && c. == quote(`~`))
+             }, logical(1L)))) {
+      customStop("'specifications' must be a list of model formulas.", "modelDependence()")
+    }
+
+    mod.dependence <- vector("list", length = length(point.inds))
+    attr(method, "model.dependence.ests") <- length(specifications)
+  }
+  else if (method == "athey-imbens") {
+    if (!is.null(frontier.object$matched.to)) {
+      customStop("the Athey-Imbens procedure cannot be used with a pair-based frontier.", "estimateEffects()")
+    }
+
+    for (i in covariates) {
+      if (is.character(frontier.object$dataset[[i]])) frontier.object$dataset[[i]] <- factor(frontier.object$dataset[[i]])
+      frontier.object$dataset[[i]] <- as.numeric(frontier.object$dataset[[i]])
+    }
+
+    if (verbose) cat("Making cutpoints for Athey-Imbens bounds...\n")
+    cutpoint.method <- match_arg(cutpoint.method)
+
+    cutpoints <- setNames(lapply(covariates, function(cov) {
+      if (is.factor(frontier.object$dataset[[cov]])) {
+        NA
+      }
+      else if (!is.null(cutpoints) && cov %in% names(cutpoints)) {
+        cutpoints[[cov]]
+      }
+      else{
+        getCutpoint(frontier.object$dataset, base.form, cov, cutpoint.method)
+      }
+    }), covariates)
+
+    mod.dependence <- vector("list", length = length(point.inds))
+    attr(method, "cutpoint.method") <- cutpoint.method
+  }
+
+  if (verbose) {
+    cat("Estimating effects...\n")
+    pb <- txtProgressBar(min = 1, max = length(point.inds) + 1, style = 3)
+  }
+
+  #Estimate effect, mod dep, and CI in unadjusted data
+
+  fit.un <- estOneEffect(base.form, frontier.object$dataset, treatment,
+                         alpha = alpha)
+
+  coef.un <- fit.un[1]
+  CI.un <- fit.un[2:3]
+  if (method != "none") {
+    mod.dependence.un <- modelDependenceInternal(frontier.object$dataset,
+                                                 treatment = treatment,
+                                                 outcome = outcome,
+                                                 covariates = covariates,
+                                                 base.form = base.form,
+                                                 method = method,
+                                                 specifications = specifications,
+                                                 cutpoints = cutpoints,
+                                                 verbose = FALSE)[1:2]
+  }
+
+
+  if (verbose) setTxtProgressBar(pb, 1)
+
+  for (i in seq_along(point.inds)) {
+    this.dat.inds.to.drop <- unlist(frontier.object$frontier$drop.order[seq_len(point.inds[i])])
+
+    matched.dataset <- makeMatchedData(frontier.object$dataset,
+                                       matched.to = frontier.object$matched.to,
+                                       drop.inds = this.dat.inds.to.drop)
+
+    if (method != "none") {
+      suppressWarnings({
+        mod.dependence[[i]] <- modelDependenceInternal(matched.dataset,
+                                                       treatment = treatment,
+                                                       outcome = outcome,
+                                                       covariates = covariates,
+                                                       weights = matched.dataset[[attr(matched.dataset, "weights")]],
+                                                       base.form = base.form,
+                                                       method = method,
+                                                       specifications = specifications,
+                                                       cutpoints = cutpoints,
+                                                       verbose = FALSE)[1:2]
+      })
+    }
+
+    results <- estOneEffect(base.form, matched.dataset, treatment,
+                            weights = matched.dataset[[attr(matched.dataset, "weights")]],
+                            alpha = alpha)
+
+    coefs[i] <- results[1]
+    CIs[[i]] <- results[2:3]
+
+    if (verbose) setTxtProgressBar(pb, i + 1)
+  }
+  if (verbose) {
+    close(pb)
+    cat("Done!\n")
+  }
+
+  out <- list(Xs = frontier.object$frontier$Xs[point.inds],
+              coefs = coefs,
+              CIs = CIs,
+              mod.dependence = mod.dependence,
+              QOI = frontier.object$QOI,
+              method = method,
+              n = frontier.object$n,
+              treatment = treatment,
+              covariates = covariates,
+              base.form = base.form,
+              un = list(coef = coef.un,
+                        CI = CI.un,
+                        mod.dependence = mod.dependence.un),
+              call = call)
+
+  if (method == "extreme-bounds") {
+    attr(out, "specifications") <- lapply(specifications, function(s) {
+      if (is.call(s)) deparse1(s) else s
+    })
+  }
+
+  class(out) <- "frontierEstimates"
+  return(out)
 }
 
+print.frontierEstimates <- function(x, ...){
+  cat("A frontierEstimates object\n")
+  cat(paste0("- quantity of interest: ", x$QOI, "\n"))
+  cat(paste0("- model sensitivity method: ", switch(x$method, "none" = "none",
+                                                    "extreme-bounds" = "extreme bounds",
+                                                    "athey-imbens" = "Athey-Imbens"),
+             "\n"))
+  if (x$method == "extreme-bounds") {
+    cat(paste0("   - number of specifications: ", attr(x$method, "model.dependence.ests"), "\n"))
+  }
+  else if (x$method == "athey-imbens") {
+    cat(paste0("   - cutpoint method: ", switch(attr(x$method, "cutpoint.method"),
+                                                "segmented" = "segmented regression",
+                                                attr(x$method, "cutpoint.method")), "\n"))
+  }
+  cat(paste0("- number of estimates: ", length(x$Xs), "\n"))
+  cat(paste0("- treatment: ", x$treatment, "\n"))
+  cat(paste0("- covariates: ", paste0(x$covariates, collapse = ", "), "\n"))
+  cat(paste0("- outcome model: ", deparse1(x$base.form), "\n"))
+
+  invisible(x)
+}
+
+summary.frontierEstimates <- function(object, ...) {
+  object
+}

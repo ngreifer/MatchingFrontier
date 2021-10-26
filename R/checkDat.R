@@ -1,22 +1,37 @@
-checkDat <-
-function(dataset, treatment, match.on){    
-       
-    # Make sure user isn't trying to match on the treatment or the outcome
-    if(treatment %in% match.on){
-        customStop("the treatment is in 'match.on'. You shouldn't match on the treatment, that's bad.", 'makeFrontier()')
+checkDat <- function(dataset, treatment, match.on){
+
+    if (missing(treatment) || length(treatment) == 0 || !is.character(treatment)) {
+        customStop("a treatment variable must be supplied.", 'makeFrontier()')
     }
 
-    # Check treatment
-    if(sum(!(dataset[,treatment] %in% c(0,1))) != 0){
-        customStop('the treatment must be either 0/1 (integers) or "TRUE"/"FALSE" (logical).', 'makeFrontier()')
+    if (missing(match.on) || length(match.on) == 0 || !is.character(match.on)) {
+        customStop("matching variables must be supplied.", 'makeFrontier()')
+    }
+
+    if (missing(dataset) || length(dataset) == 0) {
+        customStop("a dataset must be supplied.", 'makeFrontier()')
+    }
+
+    # Make sure user isn't trying to match on the treatment or the outcome
+    if (treatment %in% match.on) {
+        customStop("the treatment must not be in the matching variables.", 'makeFrontier()')
+    }
+
+    if (!all(match.on %in% names(dataset))) {
+        customStop("all matching variables must be present in 'dataset'.", 'makeFrontier()')
+    }
+
+    if (!treatment %in% names(dataset)) {
+        customStop("the treatment variable must be present in 'dataset'.", 'makeFrontier()')
     }
 
     # Check for missing values
-    if(sum(is.na(dataset)) != 0){
-        customStop("missing values in the data; remove them (or impute) and try again.", 'makeFrontier()')
+    if (anyNA(dataset[c(treatment, match.on)])){
+        customStop("missing values are not allowed in the treatment or matching variables.", 'makeFrontier()')
     }
-    
-    rownames(dataset) <- 1:nrow(dataset)
-    return(dataset)
 
+    # Check treatment
+    if (length(unique(dataset[[treatment]])) != 2) {
+        customStop('the treatment must be a binary variable (ideally 0/1).', 'makeFrontier()')
+    }
 }

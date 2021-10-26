@@ -1,117 +1,281 @@
-modelDependence <-
-function(dataset,
-         treatment,
-         outcome = NULL,
-         covariates = NULL,
-         model.dependence.ests = NULL,
-         verbose = TRUE,
-         ratio = 'fixed',
-         specifications = NULL,
-         base.form = NULL,
-         cutpoints = NULL,
-         median = TRUE,
-         seed = 02138){
-    set.seed(seed)
-    
-    if(!is.null(base.form)){
-        base.form <- as.formula(base.form)
-        
-        covs <- strsplit(as.character(base.form[3]), '\\+')
-        covs <- unlist(lapply(covs, trim))
-        
-        base.theta <- lm(base.form, data = dataset)$coefficients[[treatment]]
-        
-        if(verbose){
-            cat(paste('Estimate from base model:', round(base.theta, 2), '\n'))
-        }
-        
-        N <- nrow(dataset)
-        # estimate theta_p
+modelDependence <- function(base.form = NULL,
+                            dataset,
+                            treatment,
+                            outcome,
+                            covariates,
+                            weights = NULL,
+                            method = c("extreme-bounds", "athey-imbens"),
+                            model.dependence.ests = 101,
+                            specifications = NULL,
+                            cutpoints = NULL,
+                            cutpoint.method = c("mean", "median", "segmented"),
+                            verbose = TRUE,
+                            seed = NULL) {
 
-        theta.Ps <- c()
-        
-        for(cov in covs){
-            if(cov == treatment){next}
-            
-            # Formula for this iteration
-            this.form <- paste(as.character(base.form[2]),
-                               as.character(base.form[1]),
-                               paste(covs[!(covs %in% cov)], collapse = ' + '))
-            
-            base.mod <- lm(base.form, data = dataset)
-            
-            # Split data
-            if(length(unique(dataset[[cov]])) == 2){
-                split.inds <- dataset[[cov]] == unique(dataset[[cov]])[1]            
-                dat1 <- dataset[split.inds,]
-                dat2 <- dataset[!split.inds,]
-            }else{
-                if(cov %in% names(cutpoints)){
-                    cutpoint <- cutpoints[names(cutpoints) == cov]
-                }else{
-                    cutpoint <- getCutpoint(dataset, base.form, cov, median)
-                }
-                cutpoint <- unlist(cutpoint)
-                split.inds <- dataset[[cov]] < cutpoint
-                dat1 <- dataset[split.inds,]
-                dat2 <- dataset[!split.inds,]
-            }
+  if (!is.null(seed)) set.seed(seed)
 
-            # Get theta_ps
-            dat1.est <- lm(this.form, data = dat1)$coefficients[[treatment]]
-            dat2.est <- lm(this.form, data = dat2)$coefficients[[treatment]]
-            
-            this.theta.p <- dat1.est * (nrow(dat1) / N) + dat2.est * (nrow(dat2) / N)        
-            
-            if(verbose){
-                cat(paste('Estimate from', cov, 'partition:', round(this.theta.p, 2), '\n'))
-            }
-            theta.Ps <- c(theta.Ps, this.theta.p)      
-        }
-        
-        covs <- covs[!(covs %in% treatment)]
-        failed.covs <-covs[is.na(theta.Ps)]
-        
-        theta.Ps <- theta.Ps[!is.na(theta.Ps)]
-        
-        sigma.hat.theta <- sqrt(sum((theta.Ps - base.theta) ^ 2) / length(theta.Ps))
-        
-        return(sigma.hat.theta)
-    } else {
-        
-        if(is.null(covariates)){
-            covariates <- colnames(dataset)[!(colnames(dataset) %in% c(treatment, outcome, 'matched.to'))]
-        }
-        
-        if(is.null(model.dependence.ests) & is.null(specifications)){
-            stop("Must specify either 'specifications' or 'model.dependence.ests'.")
-        }
-        
-        if(is.null(specifications)){
-            specifications <- getSpecifications(covariates, treatment, outcome, dataset, model.dependence.ests)
-        }    
-        
-        if(is.null(model.dependence.ests)){
-            model.dependence.ests <- length(specifications)
-        }    
-        
-        if(length(specifications) != model.dependence.ests){
-            stop("'model.dependence.ests' must equal the length of 'specifications'.")
-        }
-        
-        coef.dist <- c()
-        for(k in 1:model.dependence.ests){
-            formula <- specifications[k]
-                                        # run model
-            if(ratio == 'variable'){
-                w <- makeWeights(dataset, treatment)
-                dataset$w <- w            
-            results <- lm(formula, dataset, weights = w)
-            } else {
-                results <- lm(formula, dataset)
-            }
-            coef.dist <- c(coef.dist, coef(results)[treatment])
-        }
-        return(range(coef.dist))
+  if (missing(dataset) || length(dataset) == 0){
+    customStop("a dataset must be supplied.", 'modelDependence()')
+  }
+
+  if (is.null(base.form)) {
+    if (missing(outcome)) {
+      customStop("when 'base.form' is omitted, the 'outcome' argument is required.", "modelDependence()")
     }
+    if (missing(treatment) || length(treatment) == 0){
+      customStop("when 'base.form' is omitted, the 'treatment' argument is required.", 'modelDependence()')
+    }
+    base.form <- reformulate(treatment, outcome)
+  }
+  else {
+    base.form <- terms(as.formula(base.form))
+    all.base.form.vars <- all.vars(base.form)
+    rhs.base.form.vars <- all.vars(delete.response(base.form))
+
+    outcome <- setdiff(all.base.form.vars, rhs.base.form.vars)[1]
+
+    if (length(rhs.base.form.vars) == 1) {
+      if (!missing(treatment) && !is.null(treatment) && !identical(treatment, rhs.base.form.vars)) {
+        customStop("the treatment variable must be present in 'base.form'.", 'modelDependence()')
+      }
+      treatment <- rhs.base.form.vars
+    }
+    else if (missing(treatment) || length(treatment) == 0){
+      customStop("a treatment variable must be supplied.", 'modelDependence()')
+    }
+    else if (!treatment %in% rhs.base.form.vars) {
+      customStop("the treatment variable must be present in 'base.form'.", 'modelDependence()')
+    }
+  }
+
+  if (missing(covariates)) {
+    covariates <- setdiff(all.vars(base.form), c(outcome, treatment))
+  }
+  if (length(covariates) == 0) {
+    customStop("the 'covariates' argument is required when 'base.form' does not contain covariates.", "modelDependence()")
+  }
+  if (inherits(covariates, "formula")) {
+    covariates <- all.vars(delete.response(terms(covariates)))
+  }
+  if (!all(covariates %in% names(dataset))) {
+    customStop("all covariates must be present in 'dataset'.", 'modelDependence()')
+  }
+
+  method <- match_arg(method)
+
+  if (method == "extreme-bounds") {
+    if (is.null(model.dependence.ests) && is.null(specifications)) {
+      customStop("either 'specifications' or 'model.dependence.ests' must be specified when using the extreme bounds procedure.", "modelDependence()")
+    }
+
+    if (is.null(specifications)) {
+      specifications <- getSpecifications(base.form, covariates, dataset, model.dependence.ests)
+    }
+    else if (!is.list(specifications) ||
+             !all(vapply(specifications, function(s) {
+               inherits(s, "formula") ||
+                 (is.character(s) && length(s) == 1 && is.call(ff <- str2lang(s)) &&
+                  is.symbol(c. <- ff[[1L]]) && c. == quote(`~`))
+             }, logical(1L)))) {
+      customStop("'specifications' must be a list of model formulas.", "modelDependence()")
+    }
+
+    if (!is.null(weights) && (!is.numeric(weights) || length(weights) != nrow(dataset))) {
+      customStop("'weights' must be a nmeric vector with a value for each unit in the data.", "modelDependence()")
+    }
+  }
+  else if (method == "athey-imbens") {
+
+    if (!is.null(weights)) {
+      if (!all(weights %in% 0:1)) {
+        customStop('non-0/1 weights cannot be used with the Athey-Imbens procedure.", "modelDependence()')
+      }
+      else {
+        dataset <- dataset[weights > 0,,drop = FALSE]
+        weights <- NULL
+      }
+    }
+
+    cutpoint.method <- match_arg(cutpoint.method)
+
+    for (i in covariates) {
+      nu <- length(unique(dataset[[i]]))
+      if (nu == 1L) covariates <- setdiff(covariates, i)
+      else if (nu == 2L) dataset[[i]] <- factor(dataset[[i]], nmax = 2)
+      else if (is.character(dataset[[i]])) dataset[[i]] <- factor(dataset[[i]])
+    }
+
+    cutpoints <- setNames(lapply(covariates, function(cov) {
+      if (is.factor(dataset[[cov]])) {
+        NA
+      }
+      else if (!is.null(cutpoints) && cov %in% names(cutpoints)) {
+        cutpoints[[cov]]
+      }
+      else{
+        getCutpoint(dataset, base.form, cov, cutpoint.method)
+      }
+    }), covariates)
+  }
+
+  out <- modelDependenceInternal(dataset, treatment = treatment,
+                                 outcome = outcome,
+                                 covariates = covariates,
+                                 weights = weights,
+                                 base.form = base.form,
+                                 method = method,
+                                 specifications = specifications,
+                                 cutpoints = cutpoints,
+                                 verbose = verbose)
+
+  return(out)
+}
+
+modelDependenceInternal <- function(dataset,
+                                    treatment,
+                                    outcome,
+                                    covariates,
+                                    weights = NULL,
+                                    base.form,
+                                    method = c("extreme-bounds", "athey-imbens"),
+                                    specifications = NULL,
+                                    cutpoints = NULL,
+                                    verbose = TRUE) {
+
+  method <- match_arg(method)
+
+  base.coef <- estOneEffect(base.form, dataset = dataset,
+                            treatment = treatment,
+                            # subclass = dataset$.subclass, id = dataset$.id,
+                            weights = weights, alpha = NULL)["Estimate"]
+
+  if (method == "extreme-bounds") {
+    #Needs specifications
+    coef.dist <- vapply(specifications, function(s) {
+      formula <- as.formula(s)
+      # run model
+      est <- estOneEffect(formula, dataset = dataset,
+                          treatment = treatment, weights = weights,
+                          # subclass = dataset$.subclass, id = dataset$.id,
+                          alpha = NULL)
+      return(est["Estimate"])
+    }, numeric(1L))
+
+    out <- quantile(coef.dist, c(.025, .975))
+    attr(out, "specifications") <- lapply(specifications, function(s) {
+      if (is.call(s)) deparse1(s) else s
+    })
+    attr(out, "estimates") <- coef.dist
+  }
+  else if (method == "athey-imbens") {
+
+    N <- nrow(dataset)
+
+    theta.Ps <- vapply(covariates, function(cov) {
+      # Formula for this iteration; remove cov
+      this.form <- update(base.form, formula(paste0(". ~ . -", cov)))
+
+      # Split data
+      if (anyNA(cutpoints[[cov]])) {
+        split.datasets <- split(dataset, dataset[[cov]])
+        if (!is.null(weights)) split.weights <- split(weights, dataset[[cov]])
+      }
+      else {
+        split.datasets <- split(dataset, dataset[[cov]] < cutpoints[[cov]])
+        if (!is.null(weights)) split.weights <- split(weights, dataset[[cov]] < cutpoints[[cov]])
+      }
+
+      # Get theta_ps
+      this.theta.p <- sum(vapply(seq_along(split.datasets), function(i) {
+        d <- process_safe_for_model(split.datasets[[i]], this.form)
+
+        if (!is.null(weights)) w <- split.weights[[i]]
+        else w <- NULL
+
+        d.est <- estOneEffect(this.form, dataset = d,
+                              treatment = treatment,
+                              weights = w, alpha = NULL)["Estimate"]
+
+        return(d.est * (nrow(d)/N))
+      }, numeric(1L)))
+
+      as.numeric(this.theta.p)
+
+    }, numeric(1L))
+
+    theta.Ps <- theta.Ps[!is.na(theta.Ps)]
+
+    if (length(theta.Ps) == 0) out <- c(NA_real_, NA_real_)
+    else {
+      sigma.hat.theta <- sqrt(sum((theta.Ps - base.coef) ^ 2) / length(theta.Ps))
+      out <- c(base.coef - sigma.hat.theta, base.coef + sigma.hat.theta)
+    }
+
+
+    attr(out, "estimates") <- theta.Ps
+    attr(out, "sigma") <- sigma.hat.theta
+  }
+
+  attr(out, "method") <- method
+  attr(out, "base.est") <- base.coef
+  names(out) <- c("lower", "upper")
+
+  class(out) <- c("modelDependenceBounds", "numeric")
+
+  return(out)
+}
+
+print.modelDependenceBounds <- function(x, ...) {
+  if (length(x) != 2 || is.null(attr(x, "method"))) {
+    print(as.numeric(x), ...)
+    return(invisible(as.numeric(x)))
+  }
+  else {
+    method <- attr(x, "method")
+    method.info <- switch(method,
+                          "extreme-bounds" = "Extreme model dependence bounds:",
+                          "athey-imbens" = "Athey-Imbens model dependence bounds:")
+    cat(method.info, "\n")
+    print(c(x[1:2], diff = unname(diff(x))), ...)
+    return(x)
+  }
+}
+
+plot.modelDependenceBounds <- function(x, ...) {
+  method <- attr(x, "method")
+  est <- attr(x, "estimates")
+  base.est <- attr(x, "base.est")
+
+  min.est <- min(est)
+  max.est <- max(est)
+
+  if (method == "extreme-bounds") {
+  p <- ggplot() + geom_histogram(aes(x = est), bins = 15, color = "gray60", fill = "gray60") +
+    geom_vline(aes(xintercept = x), color = "red") +
+    geom_vline(aes(xintercept = base.est), color = "blue") +
+    geom_hline(yintercept = 0) +
+    theme_bw() +
+    theme(plot.title = element_text(hjust = .5)) +
+    labs(title = "Extreme model dependence bounds",
+         x = "Estimate",
+         y = "Count")
+  }
+  else if (method == "athey-imbens") {
+    d <- data.frame(Var = factor(c(names(est), "Original"), levels = c("Original", names(est)[order(est, decreasing = FALSE)])),
+                    Est = c(est, base.est))
+
+    p <- ggplot(data = d) +
+      geom_point(aes(x = Est, y = Var, color = Var)) +
+      geom_vline(xintercept = x, color = "red") +
+      geom_vline(aes(xintercept = base.est), color = "blue") +
+      scale_color_manual(values = setNames(c("blue", rep("black", length(est))), levels(d$Var))) +
+      guides(color = "none") +
+      theme_bw() +
+      theme(plot.title = element_text(hjust = .5)) +
+      labs(title = "Athey-Imbens model dependence bounds",
+           x = "Estimate",
+           y = "Splitting covariate")
+  }
+
+  p
 }

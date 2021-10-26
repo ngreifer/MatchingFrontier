@@ -1,46 +1,47 @@
-getSpecifications <- function(covariates, treatment, outcome, dataset, N){
+getSpecifications <- function(base.form, covariates, dataset, N){
+    #Note: in order for poly_() to work, it must be wrapped in I(),
+    #and form.list must be generated in this loop, not lapply().
+    form.list <- vector("list", N)
+    no.poly.covs <- covariates[vapply(covariates, function(cov) {
+        is.character(dataset[[cov]]) ||
+            is.logical(dataset[[cov]]) ||
+            is.factor(dataset[[cov]]) ||
+            length(unique(dataset[[cov]])) <= 3},
+        logical(1L))]
 
-    specifications <- c()
-
-    for(i in 1:N){
-        covs <- sample(covariates, sample(1:length(covariates), 1))
-        
-        cov.polys <- c()
-        for(cov in covs){
-            if(length(unique(dataset[[cov]])) <= 3){
-                cov.polys <- c(cov.polys, cov)
-                next
-            }
-            cov.polys <- c(cov.polys, paste('poly(', cov, ',', sample(1:3, 1), ', raw = TRUE)', sep = ''))
+    for (i in seq_len(N)) {
+        if (i == 1) {
+            form.list[[i]] <- deparse1(base.form)
         }
-        
-                                        # Double interactions
-        if(length(covs) > 1){
+
+        #Add polynomials to model
+        covs <- sample(covariates, sample(seq_along(covariates), 1))
+        cov.polys <- vapply(setdiff(covs, no.poly.covs), function(cov) {
+            if (sample(c(TRUE, FALSE), 1)) paste0("I(", cov, "^2) + I(", cov, "^3)")
+            else paste0("I(", cov, "^2)")
+        }, character(1L))
+
+        if (length(covs) > 1) {
+            #Add (a random number of) interactions to model
             possible.interactions <- combn(covs, 2, simplify = FALSE)
-            cov.cols <- sample(1:length(possible.interactions), sample(1:length(possible.interactions), 1))
-            cov.interactions <- c()
-            for(cov.ind in 1:length(cov.cols)){
-                this.interaction <- paste(possible.interactions[[cov.ind]], collapse = ':')
-                cov.interactions <- c(cov.interactions, this.interaction)
-            }
-            formula <- paste(outcome,
-                             '~',
-                             paste(treatment, '+'),
-                             paste(paste(cov.polys, collapse = ' + ')),
+            cov.cols <- sample(seq_along(possible.interactions), sample(seq_along(possible.interactions), 1))
+            cov.interactions <- vapply(cov.cols, function(cov.ind) {
+                paste(possible.interactions[[cov.ind]], collapse = ' * ')
+            }, character(1L))
+
+            formula <- paste(deparse1(base.form),
                              '+',
-                             paste(paste(cov.interactions, collapse = ' + '))
-                             )
-        }else{
-            formula <- paste(outcome,
-                             '~',
-                             paste(treatment, '+'),
-                             paste(paste(cov.polys, collapse = ' + '))
-                             )
+                             paste(c(covs, cov.polys, cov.interactions), collapse = ' + ')
+            )
         }
-        if(i == 1){
-            formula <- paste(outcome, '~',  treatment)
+        else {
+            formula <- paste(deparse1(base.form),
+                             '+',
+                             paste(c(covs, cov.polys), collapse = ' + ')
+            )
         }
-        specifications <- c(specifications, formula)
+
+        form.list[[i]] <- formula
     }
-    return(specifications)
+    form.list
 }

@@ -1,0 +1,34 @@
+estOneEffect <- function(formula, dataset, treatment, weights = NULL, subclass = NULL, id = NULL, alpha = .05) {
+
+  dataset <- process_safe_for_model(dataset, formula)
+
+  #For now, ignoring clustering by subclass and ID. Seems vcovHC is better for matching
+  #w/ replacement.
+  subclass <- id <- NULL
+
+  fit <- do.call("lm", list(formula, data = dataset, weights = weights), quote = TRUE)
+
+  if (is.null(subclass) && is.null(id)) {
+    if (!is.null(alpha)) ci <- safe_ci(fit, treatment, vcov. = sandwich::vcovHC, type = "HC3",
+                                       alpha = alpha)
+  }
+  else {
+    if (!is.null(alpha)) ci <- safe_ci(fit, treatment, vcov. = sandwich::vcovCL, type = "HC1",
+                                   cluster = list(subclass, id), alpha = alpha)
+  }
+
+  if (!is.null(alpha)) {
+    if (treatment %in% rownames(ci)) {
+      out <- c(coef(fit)[treatment], ci[treatment, ])
+    }
+    else out <- rep(NA_real_, 3)
+
+    names(out) <- c("Estimate", colnames(ci))
+  }
+  else {
+    out <- coef(fit)[treatment]
+
+    names(out) <- "Estimate"
+  }
+  return(out)
+}
