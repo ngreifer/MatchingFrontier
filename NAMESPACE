@@ -1,20 +1,27 @@
-import(utils)
-import(stats)
-import(graphics)
-import(grDevices)
-importFrom(igraph,graph.data.frame,V,clusters)
-importFrom(MASS,parcoord)
-importFrom(segmented,segmented,seg.control)
-export(plotMeans,
-       generateDataset,
-       makeFrontier,
-       parallelPlot,
-       estimateEffects,
-       modelDependence,
-       plotPrunedMeans       
-       )
-S3method(plot,L1SATTClass)
-S3method(plot,MahalFSATTClass)
-S3method(plot,frontierEstimates)
-S3method(print,L1SATTClass)
-S3method(print,MahalFSATTClass)
+import("ggplot2")
+import("MatchIt")
+import("stats")
+
+importFrom("grDevices", "nclass.FD", "nclass.Sturges", "nclass.scott",
+           "rgb")
+importFrom("graphics", "lines", "mtext", "polygon")
+importFrom("utils", "combn", "data", "packageName",
+           "setTxtProgressBar", "txtProgressBar")
+
+export("makeFrontier", "generateDataset", "frontier_to_matchit",
+       "estimateEffects", "modelDependence")
+
+S3method("makeFrontier", "formula")
+S3method("makeFrontier", "data.frame")
+
+S3method("print", "matchFrontier")
+S3method("plot", "matchFrontier")
+S3method("summary", "matchFrontier")
+S3method("print", "summary.matchFrontier")
+
+S3method("print", "modelDependenceBounds")
+S3method("plot", "modelDependenceBounds")
+
+S3method("print", "frontierEstimates")
+S3method("plot", "frontierEstimates")
+S3method("summary", "frontierEstimates")
