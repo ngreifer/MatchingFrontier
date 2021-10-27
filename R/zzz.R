@@ -7,10 +7,9 @@ utils::globalVariables(c("Val", "Covariate", "Est", "Var"))
 }
 
 .onAttach <- function(libname, pkgname) {
-  pkgLib <- dirname(system.file(package = pkgname))
-  version <- packageDescription(pkgname, lib.loc = pkgLib)$Version
-  BuildDate <- packageDescription(pkgname, lib.loc = pkgLib)$Date
+  version <- packageVersion(pkgname)
+  BuildDate <- packageDate(pkgname)
 
-  foo <- paste0(" ", pkgname, " (Version ", version, ", Build Date: ", format(BuildDate, "%F"), ")")
+  foo <- paste0(" ", pkgname, " (Version ", version, ", Build Date: ", if (!anyNA(BuildDate)) format(BuildDate, "%F"), ")")
   packageStartupMessage(foo)
 }

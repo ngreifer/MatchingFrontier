@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
   R.options = list(width = 200)
 )
 ```
-# MatchingFrontier: Computation of the Balance - Sample Size Frontier in Matching Methods for Causal Inference 
+# MatchingFrontier: Computation of the Balance-Sample Size Frontier in Matching Methods for Causal Inference 
  <!-- <img src="man/figures/logo.png" align="right" width="150"/> -->
  
 [![CRAN_Status_Badge](https://img.shields.io/cran/v/MatchingFrontier?color=952100)](https://cran.r-project.org/package=MatchingFrontier) [![CRAN_Downloads_Badge](https://cranlogs.r-pkg.org/badges/MatchingFrontier?color=952100)](https://cran.r-project.org/package=MatchingFrontier)

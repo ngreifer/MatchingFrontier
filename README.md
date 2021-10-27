@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# MatchingFrontier: Automated Matching for Causal Inference
+# MatchingFrontier: Computation of the Balance-Sample Size Frontier in Matching Methods for Causal Inference
 
 <!-- <img src="man/figures/logo.png" align="right" width="150"/> -->
 

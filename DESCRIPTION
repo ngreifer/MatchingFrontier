@@ -1,7 +1,7 @@
 Package: MatchingFrontier
 Version: 3.0.0.9000
 Type: Package
-Title: Computation of the Balance - Sample Size Frontier in Matching Methods for Causal Inference 
+Title: Computation of the Balance-Sample Size Frontier in Matching Methods for Causal Inference
 Authors@R: c(
   person("Gary", "King", email = "king@harvard.edu", role = c("aut"),
          comment = c(ORCID = "0000-0002-5327-7631")),
