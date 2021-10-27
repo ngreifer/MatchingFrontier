@@ -228,6 +228,29 @@ ESS <- function(w) {
   sum(w)^2/sum(w^2)
 }
 
+#Weighted mean, faster than weighted.mean()
+w_m <- function(x, w = NULL) {
+  if (is.null(w)) sum(x)/length(x)
+  else sum(x*w)/sum(w)
+}
+
+#Weighted KS statistic, from cobalt's col_w_ks()
+w_ks <- function(x, treat, w = NULL) {
+  if (is.null(w)) w <- rep(1, length(treat))
+
+  tval1 <- treat[1]
+
+  w_ <- w
+  w_[treat == tval1] <-  w[treat == tval1]/sum(w[treat == tval1])
+  w_[treat != tval1] <- -w[treat != tval1]/sum(w[treat != tval1])
+
+  ord <- order(x)
+  cumv <- abs(cumsum(w_[ord]))[c(diff(x[ord]) != 0, TRUE)]
+  ks <- if (length(cumv) == 0) 0 else max(cumv)
+
+  return(ks)
+}
+
 #Get calling function
 get_calling_function <- function() {
   package.funs <- getNamespaceExports(packageName()) #Note: doesn't capture S3 methods
@@ -288,11 +311,4 @@ safe_ci <- function(fit, treatment, vcov. = sandwich::vcovHC, type = "HC3", alph
   }
 
   lmtest::coefci(fit, treatment, vcov. = v, level = 1 - alpha)
-}
-
-utils::globalVariables(c("Val", "Covariate", "Est", "Var"))
-
-#Used to load backports functions. No need to touch, but must always be included somewhere.
-.onLoad <- function(libname, pkgname) {
-  backports::import(pkgname)
 }
