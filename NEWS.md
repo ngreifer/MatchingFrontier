@@ -42,7 +42,7 @@ pdf_document: default
 
 * The plot is now a line plot rather than a dot plot.
 
-* The `covs` argument can be specified to produce balance plots for specific covariates; these include plots of (standardized) mean differences or (standardized) means, depending on the arguments supplied to `diffs` and `std`.
+* The `covs` argument can be specified to produce balance plots for specific covariates; these include plots of (standardized) mean differences, (standardized) means, or Kolmogorov-Smirnov statistics depending on the arguments supplied to `stat`.
 
 * There is now a help page for `plot.matchFrontier()`.
 
@@ -68,9 +68,11 @@ The `modelDependence()` function for assessing model dependence in a single data
 
 * When using the extreme bounds procedure, the 2.5th and 97.5th percentiles of the resulting distribution of effect estimates are returned rather than the minimum and maximum in order to encourage the use of larger number of model specifications.
 
+* A new `plot()` method can be used to visualize the resulting model dependence estimates.
+
 ### Estimating effects across the frontier
 
-`estimateEffects()` has been updated to estimate effects in accordance with modern recommendations, e.g., by using robust standard errors. Some of the argument names have changed to be more consistent with other functions.
+`estimateEffects()` has been updated to estimate effects in accordance with modern recommendations, e.g., by using robust standard errors and corrected formulas for computing the matching weights. Some of the argument names have changed to be more consistent with other functions.
 
 * The new `method` argument controls whether model dependence bounds are computed or not and which method to use if so. Model dependence bounds can be suppressed by setting `method = "none"`.
 
@@ -78,7 +80,7 @@ The `modelDependence()` function for assessing model dependence in a single data
 
 * The `alpha` argument now refers to the alpha level used to select the critical test statistic for the confidence intervals rather than the confidence level.
 
-* The new `cutpoint.method` argument controls how covariate cut points when using the Athey-Imbens model dependence procedure are calculated, and can be specified either as `"segment"` to use segmented regression or `"mean"` or `"median"` to use the covariate mean or median, respectively.
+* The new `cutpoint.method` argument controls how covariate cut points when using the Athey-Imbens model dependence procedure are calculated, and can be specified either as `"segmented"` to use segmented regression or `"mean"` or `"median"` to use the covariate mean or median, respectively.
 
 * A new `print()` method displays some metadata about the estimated effects.
 
