@@ -6,7 +6,8 @@ importFrom("grDevices", "nclass.FD", "nclass.Sturges", "nclass.scott",
            "rgb")
 importFrom("graphics", "lines", "mtext", "polygon")
 importFrom("utils", "combn", "data", "packageName",
-           "setTxtProgressBar", "txtProgressBar")
+           "setTxtProgressBar", "txtProgressBar",
+           "packageDate", "packageVersion")
 
 export("makeFrontier", "generateDataset", "frontier_to_matchit",
        "estimateEffects", "modelDependence")

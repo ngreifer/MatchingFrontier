@@ -1,5 +1,5 @@
 Package: MatchingFrontier
-Version: 3.0.0.9000
+Version: 4.0.0
 Type: Package
 Title: Computation of the Balance-Sample Size Frontier in Matching Methods for Causal Inference
 Authors@R: c(
@@ -7,7 +7,7 @@ Authors@R: c(
          comment = c(ORCID = "0000-0002-5327-7631")),
   person("Christopher", "Lucas", email = "christopher.lucas@wustl.edu", role = c("aut")),
   person("Richard", "Nielsen", email = "rnielsen@mit.edu", role = c("aut")),
-  person("Noah", "Greifer", role = c("ctb", "cre", "aut"), 
+  person("Noah", "Greifer", role = c("ctb", "cre"), 
          email = "ngreifer@iq.harvard.edu",
 	       comment = c(ORCID="0000-0003-3067-7154"))
   )
