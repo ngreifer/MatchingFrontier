@@ -84,9 +84,17 @@ These frontiers can be used when the quantity of interest is the FSATE or SATT. 
 
 ### Energy distance-based frontiers
 
-Like bin-based frontiers, energy distance-based frontiers involve subset selection rather than pairing. The frontier is formed by dropping one unit at a time, in particular, the unit that when dropped would yield the greatest decrease in the imbalance metric. The imbalance metric is the energy distance, a scalar measure of the difference between two multivariate cumulative density functions [@rizzo2016; @székely2013], computed as: $$
-\mathcal{E}_{N_1, N_2}(\mathcal{X}_1, \mathcal{X}_2) = \frac{2}{N_1 N_2} \sum_{i=1}^{N_1}{\sum_{j=1}^{N_2}{||X_{1i}-X_{2j}||_2}} - \frac{1}{N_1^2} \sum_{i=1}^{N_1}{\sum_{i'=1}^{N_1}{||X_{1i}-X_{1i'}||_2}} - \frac{1}{N_2^2} \sum_{j=1}^{N_2}{\sum_{j'=1}^{N_2}{||X_{2j}-X_{2j'}||_2}}
-$$ where $\mathcal{X}_1$ and $\mathcal{X}_2$ are two samples of size $N_1$ and $N_2$ of (scaled) variables $\mathbf{X}_1$ and $\mathbf{X}_2$, respectively, and $||.||_2$ is the $L_2$-norm (i.e., Euclidean distance). At each point on the frontier, each unit's contribution to the energy distance is computed, and the unit with the greatest contribution is dropped. Energy-distance based frontiers can be thought of as a greedy, nonsmooth version of Huling and Mak's [-@huling2020] energy balancing, which estimates weights that directly minimize the energy distance in the weighted sample. The energy distance-based frontier can be useful when weights other than 0 or 1 are undesirable or the optimization required for energy balancing is intractable. Unlike pair distance-based frontiers, the energy distance-based frontier is non-monotonic; there is often a point when discarding additional units increases rather than decreases the imbalance metric, a phenomenon related to the propensity score paradox described in @king2019.
+Like bin-based frontiers, energy distance-based frontiers involve subset selection rather than pairing. The frontier is formed by dropping one unit at a time, in particular, the unit that when dropped would yield the greatest decrease in the imbalance metric. The imbalance metric is the energy distance, a scalar measure of the difference between two multivariate cumulative density functions [@rizzo2016; @székely2013], computed as: 
+$$
+\mathcal{E}(\mathbf{X}_1,\mathbf{X}_2) = 2 D_{12} -  D_{11} -  D_{22}
+$$ 
+where
+
+$$\begin{align}
+D_{12}&=\frac{1}{N_1 N_2}\sum_{i \in \mathcal{X}_1}{\sum_{j \in \mathcal{X}_2}{||X_{1i}-X_{2j}||_2}} \\ D_{11} &= \frac{1}{N_1^2}\sum_{i \in \mathcal{X}_1}{\sum_{i' \in \mathcal{X}_1}{||X_{1i}-X_{1i'}||_2}} \\ D_{22} &= \frac{1}{N_2^2}\sum_{j \in \mathcal{X}_2}{\sum_{j' \in \mathcal{X}_2}{||X_{2j}-X_{2j'}||_2}}
+\end{align}$$
+
+and where $\mathcal{X}_1$ and $\mathcal{X}_2$ are two samples of size $N_1$ and $N_2$ of (scaled) variables $\mathbf{X}_1$ and $\mathbf{X}_2$, respectively, and $||.||_2$ is the $L_2$-norm (i.e., Euclidean distance). At each point on the frontier, each unit's contribution to the energy distance is computed as the difference between the energy distance with them included and that with them dropped, and the unit with the greatest contribution is dropped. Energy-distance based frontiers can be thought of as a greedy, nonsmooth version of Huling and Mak's [-@huling2020] energy balancing, which estimates weights that directly minimize the energy distance in the weighted sample. The energy distance-based frontier can be useful when weights other than 0 or 1 are undesirable or the optimization required for energy balancing is intractable. Unlike pair distance-based frontiers, the energy distance-based frontier is non-monotonic; there is often a point when discarding additional units increases rather than decreases the imbalance metric, a phenomenon related to the propensity score paradox described in @king2019.
 
 Energy distance-based frontiers can be used when the quantity of interest is the SATE, FSATE, or SATT, making them highly versatile. For the SATE, the energy distance is computed as Huling and Mak's [-@huling2020] "improved" energy distance, which is the sum of the energy distance between the treated group and the original full sample, the energy distance between the control group and the full sample, and the energy distance between the treated and control groups. Units from either group may be dropped. As the energy distance decreases, the resulting groups each increasingly resemble the full sample and each other. For the FSATE and SATT, the energy distance is computed only between the treated and control groups (ignoring the distance from the full sample), and for the SATT, only control units can be dropped.
 
@@ -145,30 +153,30 @@ summary(mahal.frontier)
 
 From the plot and summary we can see that the initial average Mahalanobis imbalance after matching but before discarding any units was about .338. After dropping 172 treated units, the imbalance falls to 0 (i.e., indicating that the remaining units are exactly matched on all the covariates). Dropping this many units has left us with only about 13 pairs remaining, which is typically far too few to make valid inferences on. Thus, the ideal sample lies somewhere between the beginning and end of the frontier.
 
-We can also view information about balance for individual covariates using `plot.matchFrontier()`. To do so, we supply the names of individual covariates to the `covs` argument of `plot.matchFrontier()` and set `diffs = TRUE`. For standardized mean differences, which are useful for continuous covariates, we set `std = TRUE`, and for raw mean differences, we set `std = FALSE`.
+We can also view information about balance for individual covariates using `plot.matchFrontier()`. To do so, we supply the names of individual covariates to the `covs` argument of `plot.matchFrontier()` and set `stat = "std-diff"` for standardized mean differences, which are useful for continuous covariates, and `stat = "diff`, and for raw mean differences, which are useful for sets of variables that are on the same scale (like binary covariates).
 
 ```{r, fig.show='hold'}
 #Standardized mean differences for continuous covariates
 plot(mahal.frontier, covs = c("age", "educ", "re74"),
-     diffs = TRUE, std = TRUE)
+     stat = "std-diff")
 
 #Raw mean differences for categorical covariates
 plot(mahal.frontier, covs = c("nodegree", "married"),
-     diffs = TRUE, std = FALSE)
+     stat = "diff")
 ```
 
 Here we can see that after an initial imbalance (the three dots on the left side of each plot), pairing has removed much imbalance immediately even without discarding additional units. However, balance can be improved on some covariates by continuing to drop pairs.
 
-To view (standardized) means for each covariate, which allows us to see how the distribution of covariates in the estimation sample varies across the frontier, we can set `diffs = FALSE`. Using standardized means allows us to see how the standardized mean difference between the covariates in the estimation sample and the covariates in the target sample varies across the frontier; values close to zero indicate that the estimation sample strongly resembles the target sample. Using raw means by setting `std = FALSE` allows us to see the actual location of the covariate means across the frontier (though make sure variables are on the same scale if multiple are to be included in the same plot!).
+To view (standardized) means for each covariate, which allows us to see how the distribution of covariates in the estimation sample varies across the frontier, we can set `stat = "std-mean"` for standardized means and `stat = "mean"` for raw means. Using standardized means allows us to see how the standardized mean difference between the covariates in the estimation sample and the covariates in the target sample varies across the frontier; values close to zero indicate that the estimation sample strongly resembles the target sample. Using raw means allows us to see the actual location of the covariate means across the frontier (though make sure variables are on the same scale if multiple are to be included in the same plot!).
 
 ```{r, fig.show='hold'}
 #Standardized means for continuous covariates
 plot(mahal.frontier, covs = c("age", "educ", "re74"),
-     diffs = FALSE, std = TRUE)
+     stat = "std-mean")
 
 #Raw means for categorical covariates
 plot(mahal.frontier, covs = c("nodegree", "married"),
-     diffs = FALSE, std = FALSE)
+     stat = "mean")
 ```
 
 We can see that for some covariates, the distribution in the remaining sample differs quite greatly from the target sample (i.e., the treated group because our quantity of interest is the FSATT). This is the sacrifice we make by pursuing the FSATT instead of the SATT. Estimates reflect the true SATT only to the extent that the covariate distributions in the remaining sample resemble those in the original treated group.

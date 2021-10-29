@@ -99,15 +99,19 @@ King, G., Lucas, C., & Nielsen, R. A. (2017). The Balance-Sample Size Frontier i
 data("lalonde", package = "MatchIt")
 
 #Pair distance frontier for FSATT
-f1 <- makeFrontier(treat ~ age + educ + married + re74, data = lalonde,
-                   QOI = "FSATT", metric = "Mahal")
+f1 <- makeFrontier(treat ~ age + educ + married + re74,
+                   data = lalonde,
+                   QOI = "FSATT",
+                   metric = "Mahal")
 
 f1
 
 e1 <- estimateEffects(f1,
-                      base.form = re78 ~ treat + age + educ + married + re74,
-                      prop.estimated = .2,
-                      method = "extreme-bounds")
+                      base.form = re78 ~ treat + age +
+                                    educ + married + re74,
+                      prop.estimated = .2, #Should be higher
+                      method = "extreme-bounds",
+                      model.dependence.ests = 51)
 e1
 plot(e1, band = "model-dependence")
 plot(e1, band = "confidence")
