@@ -17,7 +17,7 @@ Description: Returns the subset of the data with the minimum imbalance for
 	     of causal effects for each subset size, functions for visualization
 	     and data export, and functions for calculating
 	     model dependence as proposed by Athey and Imbens. 
-URL: http://projects.iq.harvard.edu/frontier
+URL: https://projects.iq.harvard.edu/frontier
 Depends: R(>= 4.0.0)
 Imports: 
     MatchIt (>= 4.0.0),

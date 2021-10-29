@@ -1,12 +1,13 @@
 ---
-  output:
+title: NEWS
+output:
   html_document: default
-pdf_document: default
+  pdf_document: default
 ---
   `MatchingFrontier` News and Updates
 ======
 
-# MatchingFrontier (development version)
+# MatchingFrontier 4.0.0
 
 `MatchingFrontier` has been completely rewritten from scratch, providing more consistent syntax, new methods for constructing the frontier, and many other new features. All of these are breaking changes, meaning you should not expect result to agree with those from version 3.0.0 or below, and syntax from earlier versions may not work with this version. To install an older version of `MatchingFrontier` (e.g., to reproduce the results of an older analysis), you can install an archived version from CRAN. Here, we describe some of the changes made to the package and its functionality.
 
