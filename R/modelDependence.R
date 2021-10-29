@@ -237,7 +237,7 @@ print.modelDependenceBounds <- function(x, ...) {
                           "athey-imbens" = "Athey-Imbens model dependence bounds:")
     cat(method.info, "\n")
     print(c(x[1:2], diff = unname(diff(x))), ...)
-    return(x)
+    return(invisible(x))
   }
 }
 
@@ -245,9 +245,6 @@ plot.modelDependenceBounds <- function(x, ...) {
   method <- attr(x, "method")
   est <- attr(x, "estimates")
   base.est <- attr(x, "base.est")
-
-  min.est <- min(est)
-  max.est <- max(est)
 
   if (method == "extreme-bounds") {
   p <- ggplot() + geom_histogram(aes(x = est), bins = 15, color = "gray60", fill = "gray60") +
