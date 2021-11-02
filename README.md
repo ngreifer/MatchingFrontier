@@ -20,9 +20,9 @@ treatment effect estimate. `MatchingFrontier` interfaces with `MatchIt`
 to provide additional tools for assessing balance in matched datasets
 and estimating effects after matching.
 
-Below is an example of using the `MatchFrontier` to examine the
+Below is an example of using the `MatchingFrontier` to examine the
 balance-sample size frontier for the effect of a job training program on
-earnings. See `vignette("MatchFrontier")` for more information on the
+earnings. See `vignette("MatchingFrontier")` for more information on the
 setup and a more detailed exposition.
 
 ``` r
@@ -84,7 +84,8 @@ plot(mahal.estimates)
 Other tools include `generateDataset()` and `frontier_to_matchit()` for
 extracting a matched dataset at one point on the frontier and
 `modelDependence()` for computing model dependence bounds for a single
-estimate. See `vignette("MatchFrontier")` for a more in-depth tutorial.
+estimate. See `vignette("MatchingFrontier")` for a more in-depth
+tutorial.
 
 The work in this package is based off the following paper:
 
