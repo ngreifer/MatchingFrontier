@@ -124,10 +124,10 @@ mahal.frontier <- makeFrontier(treat ~ age + educ + race + married +
                                  nodegree + re74 + re75,
                                data = lalonde, 
                                QOI = "FSATT", 
-                               metric = "Mahal")
+                               metric = "mahal")
 ```
 
-There are a few ways to specify the arguments to `makeFrontier()`; see `help("makeFrontier")` for details. Here, we used the formula interface, which requires a model formula of the form `A ~ X1 + X2 + ...` where `A` corresponds to the treatment and `X1` and `X2` are the pretreatment covariates. We must also supply a dataset to the `data` argument. Note that no model is being fit here; the model formula serves to indicate which variable is the treatment and which are the covariates. The `QOI` (i.e., quantity of interest) argument corresponds to the desired estimand; here, we select the FSATT, but others are available depending on the type of frontier, as described previously. The `metric` argument corresponds to the imbalance metric used. Here, we entered `"Mahal"` to request the average Mahalanobis imbalance be used.
+There are a few ways to specify the arguments to `makeFrontier()`; see `help("makeFrontier")` for details. Here, we used the formula interface, which requires a model formula of the form `A ~ X1 + X2 + ...` where `A` corresponds to the treatment and `X1` and `X2` are the pretreatment covariates. We must also supply a dataset to the `data` argument. Note that no model is being fit here; the model formula serves to indicate which variable is the treatment and which are the covariates. The `QOI` (i.e., quantity of interest) argument corresponds to the desired estimand; here, we select the FSATT, but others are available depending on the type of frontier, as described previously. The `metric` argument corresponds to the imbalance metric used. Here, we entered `"mahal"` to request the average Mahalanobis imbalance be used.
 
 The frontier is stored in the `matchFrontier` object, which we have called `mahal.frontier`. Printing `mahal.frontier` provides a summary of the type of frontier and its components:
 
@@ -293,7 +293,7 @@ energy.frontier <- makeFrontier(treat ~ age + educ + race +
                                   married + nodegree + re74 + re75,
                                 data = lalonde, 
                                 QOI = "SATE", 
-                                metric = "Energy")
+                                metric = "energy")
 energy.frontier
 ```
 

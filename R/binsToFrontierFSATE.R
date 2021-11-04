@@ -7,10 +7,10 @@ binsToFrontierFSATE <- function(strataholder, treat.vec, metric = "L1"){
   drop.order <- vector("list", N0)
   Ys <- numeric(N0)
 
-  if (startsWith(metric, "L1")) {
+  if (startsWith(metric, "l1")) {
     Lstat <- function(diffs) .5*sum(abs(diffs))
   }
-  else if (startsWith(metric, "L2")) {
+  else if (startsWith(metric, "l2")) {
     Lstat <- function(diffs) .5*sqrt(sum(diffs^2))
   }
 

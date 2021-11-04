@@ -16,7 +16,7 @@ makeFrontier(x, ...)
 \method{makeFrontier}{formula}(formula,
              data,
              QOI = 'FSATT',
-             metric = 'Mahal',
+             metric = 'mahal',
              breaks = NULL,
              distance.mat = NULL,
              verbose = TRUE, ...)
@@ -25,7 +25,7 @@ makeFrontier(x, ...)
              treatment,
              match.on,
              QOI = 'FSATT',
-             metric = 'Mahal',
+             metric = 'mahal',
              breaks = NULL,
              distance.mat = NULL,
              verbose = TRUE, ...)
@@ -55,13 +55,13 @@ a string containing the name of the covariates variable to match on. Only requir
 the quantity of interest (i.e., estimand); allowable options include \code{'SATE'}, \code{'FSATE'}, \code{'SATT'}, and \code{'FSATT'}. See Details. Default is \code{'FSATT'}. Not all \code{QOI}s can be used with all \code{metric}s.
 }
   \item{metric}{
-the imbalance metric to be minimized; allowable options include \code{'L1'}, \code{'L1median'}, \code{'L2'}, \code{'L2median'}, \code{'Mahal'}, \code{'Euclid'}, \code{'Custom'}, and \code{'Energy'}. See Details. Default is \code{'Mahal'}. Not all \code{metric}s can be used with all \code{QOI}s.
+the imbalance metric to be minimized; allowable options include \code{'L1'}, \code{'L1median'}, \code{'L2'}, \code{'L2median'}, \code{'mahal'}, \code{'euclid'}, \code{'custom'}, and \code{'energy'}. See Details. Default is \code{'mahal'}. Not all \code{metric}s can be used with all \code{QOI}s.
 }
   \item{breaks}{
 when \code{metric} is \code{'L1'} or \code{'L2'}, a named list containing a single number giving the number of bins for each or a string corresponding to a method of computing the number of bins for each covariate; for example, \code{list(X1 = 4, X3 = "sturges")}. Allowable strings include \code{"sturges"}, \code{"scott"}, and \code{"fd"}, which use the functions \pkgfun2{grDevices}{nclass}{nclass.Sturges}, \pkgfun2{grDevices}{nclass}{nclass.scott}, and \pkgfun2{grDevices}{nclass}{nclass.FD}, respectively. The default is \code{"sturges"} for variables that are not listed or if no argument is supplied. Can also be a single value to be applied to all numeric variables. Similar to the \code{cutpoints} argument of \code{MatchIt::matchit()} with \code{\link[MatchIt:method_cem]{method = "cem"}}. Ignored for other \code{metric}s.
 }
   \item{distance.mat}{
-when \code{metric} is \code{'Custom'} or \code{'Energy'}, a distance matrix used to define the distance between units. For \code{metric = 'Custom'}, should be a distance matrix with one row for each treated unit and one column for each control unit. For \code{metric = 'Energy'}, should be a full N by N distance matrix with a row and column for each unit. Optional when \code{metric = 'Energy'}; if not specified, the Euclidean distance computed on the scaled covariates will be used instead. See Details.
+when \code{metric} is \code{'custom'} or \code{'energy'}, a distance matrix used to define the distance between units. For \code{metric = 'custom'}, should be a distance matrix with one row for each treated unit and one column for each control unit. For \code{metric = 'energy'}, should be a full N by N distance matrix with a row and column for each unit. Optional when \code{metric = 'energy'}; if not specified, the Euclidean distance computed on the scaled covariates will be used instead. See Details.
 }
   \item{verbose}{
 \code{logical}; whether to print additional information about the frontier constructing process.
@@ -71,12 +71,12 @@ arguments passed to other methods (ignored).
 }
 }
 \details{
-\code{makeFrontier()} computes the matching frontier for a given dataset, quantity of interest (QOI), and imbalance metric. The frontier describes the relationship between the size of the remaining sample and the lowest imbalance possible given that sample size. How the frontier is formed depends on the QOI and imbalance metric. Three types of frontier are currently available depending on the argument supplied to \code{metric}: pair distance-based frontiers (\code{'Mahal'}, \code{'Euclid'}, and \code{'Custom'}), bin-based frontiers (\code{'L1'}, \code{'L1median'}, \code{'L2'}, and \code{'L2median'}) and energy distance-based frontiers (\code{'Energy'}). These are described briefly below and in more detail \code{vignette("MatchingFrontier")}.
+\code{makeFrontier()} computes the matching frontier for a given dataset, quantity of interest (QOI), and imbalance metric. The frontier describes the relationship between the size of the remaining sample and the lowest imbalance possible given that sample size. How the frontier is formed depends on the QOI and imbalance metric. Three types of frontier are currently available depending on the argument supplied to \code{metric}: pair distance-based frontiers (\code{'mahal'}, \code{'euclid'}, and \code{'custom'}), bin-based frontiers (\code{'L1'}, \code{'L1median'}, \code{'L2'}, and \code{'L2median'}) and energy distance-based frontiers (\code{'energy'}). These are described briefly below and in more detail \code{vignette("MatchingFrontier")}.
 
 \subsection{Pair distance-based frontiers}{
 With a pair distance-based frontier, each unit is paired with the closest unit of the opposite treatment group, where the distance is measured as the Mahalanobis distance, the Euclidean distance, or a user-supplied distance, as determined by the \code{metric} argument. Pairing is done with replacement so units can be paired to multiple units at a time. The average distance between each unit and its paired unit is used as the imbalance metric. The frontier is formed by dropping one unit at a time, starting with the unit that is farthest from its paired unit. If two units are equally far from their respective paired units, they are both dropped. In this way, the imbalance metric will decrease monotonically until no units remain or all remain pairs contain identical members.
 
-These frontiers can only be used when the QOI is the FSATE or FSATT. The distance between units used to form the pairs and compute the imbalance metric can be computed the Mahalanobis distance (\code{metric = 'Mahal'}), the Euclidean distance (\code{metric = 'Euclid'}), or a user-supplied distance (\code{metric = 'Custom'}). When (\code{metric = 'Custom'}), a distance matrix must be supplied to \code{distance.mat} with a row for each treated unit and a column for each control unit.
+These frontiers can only be used when the QOI is the FSATE or FSATT. The distance between units used to form the pairs and compute the imbalance metric can be computed the Mahalanobis distance (\code{metric = 'mahal'}), the Euclidean distance (\code{metric = 'euclid'}), or a user-supplied distance (\code{metric = 'custom'}). When (\code{metric = 'custom'}), a distance matrix must be supplied to \code{distance.mat} with a row for each treated unit and a column for each control unit.
 }
 
 \subsection{Bin-based frontiers}{
@@ -138,7 +138,7 @@ data("lalonde", package = "MatchIt")
 #Pair distance frontier for FSATT
 f1 <- makeFrontier(treat ~ age + educ + married + re74,
                    data = lalonde, QOI = "FSATT",
-                   metric = "Mahal")
+                   metric = "mahal")
 
 f1
 plot(f1)
@@ -156,7 +156,7 @@ summary(f2)
 #Energy distance frontier for SATE
 f3 <- makeFrontier(treat ~ age + educ + married + re74,
                    data = lalonde, QOI = "SATE",
-                   metric = "Energy")
+                   metric = "energy")
 
 f3
 plot(f3)

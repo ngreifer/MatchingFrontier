@@ -2,7 +2,7 @@ makeFrontier <- function(x, ...) {
   UseMethod("makeFrontier")
 }
 makeFrontier.data.frame <- function(x, treatment, match.on, QOI = 'FSATT',
-                                    metric = 'Mahal', breaks = NULL,
+                                    metric = 'mahal', breaks = NULL,
                                     distance.mat = NULL, verbose = TRUE, ...){
 
   call <- match.call()
@@ -27,7 +27,7 @@ makeFrontier.data.frame <- function(x, treatment, match.on, QOI = 'FSATT',
 }
 
 makeFrontier.formula <- function(formula, data, QOI = 'FSATT',
-                                 metric = 'Mahal', breaks = NULL,
+                                 metric = 'mahal', breaks = NULL,
                                  distance.mat = NULL, verbose = TRUE, ...){
 
   call <- match.call()
@@ -53,10 +53,10 @@ makeFrontier.formula <- function(formula, data, QOI = 'FSATT',
 }
 
 makeFrontier_internal <- function(dataset, treatment, match.on, formula, QOI = 'FSATT',
-                                  metric = 'Mahal', breaks = NULL,
+                                  metric = 'mahal', breaks = NULL,
                                   distance.mat = NULL, call = NULL, verbose = FALSE) {
 
-  if (metric %in% c("Energy")) {
+  if (metric %in% c("energy")) {
     frontier <- EnergyFrontier(treatment = treatment,
                                dataset = dataset,
                                formula = formula,
@@ -66,7 +66,7 @@ makeFrontier_internal <- function(dataset, treatment, match.on, formula, QOI = '
                                verbose = verbose)
     frontier.class <- c("matchFrontier", "energyFrontier")
   }
-  else if (metric %in% c('Mahal', 'Euclid', 'Custom')) {
+  else if (metric %in% c('mahal', 'euclid', 'custom')) {
     frontier <- DistFrontier(treatment = treatment,
                              dataset = dataset,
                              formula = formula,
@@ -76,7 +76,7 @@ makeFrontier_internal <- function(dataset, treatment, match.on, formula, QOI = '
                              verbose = verbose)
     frontier.class <- c("matchFrontier", "distFrontier")
   }
-  else if (metric %in% c('L1', 'L2', 'L1median', 'L2median')) {
+  else if (metric %in% c('l1', 'l2', 'l1median', 'l2median')) {
     frontier <- BinFrontier(treatment = treatment,
                             dataset = dataset,
                             formula = formula,
