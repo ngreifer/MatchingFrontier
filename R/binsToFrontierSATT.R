@@ -1,4 +1,4 @@
-binsToFrontierSATT <- function(strataholder, treat.vec, metric = "L1"){
+binsToFrontierSATT <- function(strataholder, treat.vec, metric = "l1"){
 
   N1 <- sum(treat.vec[unlist(strataholder)] == 1)
   N0 <- sum(treat.vec[unlist(strataholder)] == 0)
