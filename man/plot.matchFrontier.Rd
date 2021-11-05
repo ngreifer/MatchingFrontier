@@ -57,7 +57,7 @@ data("lalonde", package = "MatchIt")
 #Pair distance frontier for FSATT
 f1 <- makeFrontier(treat ~ age + educ + married + re74,
                    data = lalonde, QOI = "FSATT",
-                   metric = "Mahal")
+                   metric = "mahal")
 
 #Plot the balance metric frontier
 plot(f1)

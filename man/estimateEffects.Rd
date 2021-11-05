@@ -102,7 +102,7 @@ data("lalonde", package = "MatchIt")
 f1 <- makeFrontier(treat ~ age + educ + married + re74,
                    data = lalonde,
                    QOI = "FSATT",
-                   metric = "Mahal")
+                   metric = "mahal")
 
 f1
 

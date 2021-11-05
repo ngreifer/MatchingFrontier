@@ -1,5 +1,7 @@
 ---
 output: github_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -35,7 +37,7 @@ mahal.frontier <- makeFrontier(treat ~ age + educ + race + married +
                                  nodegree + re74 + re75,
                                data = lalonde, 
                                QOI = "FSATT", 
-                               metric = "Mahal")
+                               metric = "mahal")
 
 mahal.frontier
 ```

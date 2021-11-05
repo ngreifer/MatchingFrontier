@@ -3,28 +3,35 @@ checkArgs <- function(QOI, metric, outcome = NULL, ...){
         customWarning("the outcome argument is defunct and will be ignored. See ?estimateEffects.", 'makeFrontier()')
     }
 
-    QOI <- try(match_arg(QOI, c("SATE", "FSATE", "SATT", "FSATT")), silent = TRUE)
+    if (length(QOI) != 1 || !is.character(QOI)) {
+        customStop("'QOI' must be a string.")
+    }
+    QOI <- try(match_arg(toupper(QOI), c("SATE", "FSATE", "SATT", "FSATT")), silent = TRUE)
     if (inherits(QOI, "try-error")){
-        customStop("QOI must be either 'SATE', 'FSATE', 'SATT', or 'FSATT'.", 'makeFrontier()')
+        customStop("'QOI' must be either 'SATE', 'FSATE', 'SATT', or 'FSATT'.", 'makeFrontier()')
     }
 
-    metric <- try(match_arg(metric, c("L1", "L1median", "L2", "L2median", "Mahal", "Euclid", "Custom", "Energy")), silent = TRUE)
+    if (length(metric) != 1 || !is.character(metric)) {
+        customStop("'metric' must be a string.")
+    }
+    metric <- try(match_arg(tolower(metric), c("l1", "l1median", "l2", "l2median", "mahal", "euclid", "custom", "energy")), silent = TRUE)
     if (inherits(metric, "try-error")){
-        customStop("'metric' must be either 'L1', 'L1median', 'L2', 'L2median', 'Mahal', 'Euclid', 'Custom', or 'Energy'.", 'makeFrontier()')
+        customStop("'metric' must be either 'l1', 'l1median', 'l2', 'l2median', 'mahal', 'euclid', 'custom', or 'energy'.", 'makeFrontier()')
     }
 
     acceptable_dist <- c("FSATE", "FSATT")
     acceptable_bin <- c("FSATE", "SATT")
     acceptable_energy <- c("SATE", "FSATE", "SATT")
+
     acceptable_combinations <- list(
-        Mahal = acceptable_dist,
-        Euclid = acceptable_dist,
-        Custom = acceptable_dist,
-        L1 = acceptable_bin,
-        L2 = acceptable_bin,
-        L1median = acceptable_bin,
-        L2median = acceptable_bin,
-        Energy = acceptable_energy
+        mahal = acceptable_dist,
+        euclid = acceptable_dist,
+        custom = acceptable_dist,
+        l1 = acceptable_bin,
+        l2 = acceptable_bin,
+        l1median = acceptable_bin,
+        l2median = acceptable_bin,
+        energy = acceptable_energy
     )
 
     bad_combination <- !QOI %in% acceptable_combinations[[metric]]

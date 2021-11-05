@@ -12,7 +12,7 @@ EnergyFrontier <- function(treatment, dataset, formula, metric, QOI, distance.ma
     if (!is.matrix(distance.mat) || !is.numeric(distance.mat) ||
         nrow(distance.mat) != length(treat) || ncol(distance.mat) != length(treat) ||
         anyNA(distance.mat)) {
-      customStop("'distance.mat' must be NULL or an N x N numeric matrix when metric = \"Energy\".", "makeFrontier()")
+      customStop("'distance.mat' must be NULL or an N x N numeric matrix when metric = \"energy\".", "makeFrontier()")
     }
   }
 

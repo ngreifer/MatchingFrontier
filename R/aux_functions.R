@@ -1,12 +1,26 @@
 #Auxiliary functions
 
 metric2info <- function(metric) {
-  if (startsWith(metric, "L1")) "L1 statistic"
-  else if (startsWith(metric, "L2")) "L2 statistic"
-  else if (metric == "Mahal") "average pairwise Mahalanobis distance"
-  else if (metric == "Euclid") "average pairwise Euclidean distance"
-  else if (metric == "Custom") "average pairwise distance"
-  else if (metric == "Energy") "energy distance"
+  metric <- tolower(metric)
+  if (startsWith(metric, "l1")) "L1 statistic"
+  else if (startsWith(metric, "l2")) "L2 statistic"
+  else if (metric == "mahal") "average pairwise Mahalanobis distance"
+  else if (metric == "euclid") "average pairwise Euclidean distance"
+  else if (metric == "custom") "average pairwise distance"
+  else if (metric == "energy") "energy distance"
+}
+
+metricType <- function(metric) {
+  switch(tolower(metric),
+         "mahal" =,
+         "euclid" =,
+         "custom" = "dist",
+         "l1" =,
+         "l2" =,
+         "l1median" =,
+         "l2median" = "bin",
+         "energy" = "energy",
+         stop("Unrecognized metric."))
 }
 
 #Function to turn a vector into a string with "," and "and" or "or" for clean messages. 'and.or'

@@ -46,6 +46,7 @@ getBins <- function(dataset, match.on, breaks = NULL){
   }
 
   #Create bins for numeric variables
+  bin.list <- setNames(vector("list", length(match.on)), match.on)
   for (i in match.on) {
     if (!i %in% names(breaks)) {
       if (is.character(dataset[[i]]) || is.factor(dataset[[i]])) next
@@ -62,16 +63,27 @@ getBins <- function(dataset, match.on, breaks = NULL){
     }
 
     #breaks is number of bins
-    bins <- seq(min(dataset[[i]]), max(dataset[[i]]), length = breaks[[i]] + 1)
-    bins[c(1, length(bins))] <- c(-Inf, Inf)
+    bin.list[[i]] <- seq(min(dataset[[i]]), max(dataset[[i]]), length = breaks[[i]] + 1)
+    bin.list[[i]][c(1, length(bin.list[[i]]))] <- c(-Inf, Inf)
 
-    dataset[[i]] <- findInterval(dataset[[i]], bins)
   }
 
-  # Calculate strata
-  strata <- factor(do.call("paste", c(dataset, list(sep = "|"))))
+  return(bin.list)
+}
 
-  strataholder <- lapply(levels(strata), function(u) which(strata==u))
+assignToBins <- function(dataset, match.on, bins.list, subset) {
+  if (missing(subset)) subset <- seq_len(nrow(dataset))
+
+  dataset <- dataset[subset, match.on]
+
+  for (i in match.on) {
+    if (!is.character(dataset[[i]]) && !is.factor(dataset[[i]]))
+      dataset[[i]] <- findInterval(dataset[[i]], bins.list[[i]])
+  }
+
+  strata <- do.call("paste", c(dataset, list(sep = "|")))
+
+  strataholder <- lapply(unique(strata), function(u) subset[strata==u])
 
   return(strataholder)
 }
@@ -83,10 +95,10 @@ get.diffs <- function(strataholder, treat.vec, num.treated, num.control){
 }
 
 getBinsAtMedian <- function(dataset, match.on, treat.vec, metric){
-  if (startsWith(metric, "L1")) {
+  if (startsWith(metric, "l1")) {
     Lstat <- function(diffs) .5*sum(abs(diffs))
   }
-  else if (startsWith(metric, "L2")) {
+  else if (startsWith(metric, "l2")) {
     Lstat <- function(diffs) .5*sqrt(sum(diffs^2))
   }
 
@@ -103,7 +115,7 @@ getBinsAtMedian <- function(dataset, match.on, treat.vec, metric){
 
   nunique.covs <- vapply(match.on, function(i) length(unique(dataset[[i]])), integer(1L))
 
-  strataholders <- lapply(seq_len(n.coarsenings), function(i) {
+  bin.lists <- lapply(seq_len(n.coarsenings), function(i) {
     breaks <- setNames(lapply(nunique.covs, function(nu) {
       sample(seq(min(2, nu), min(12, nu)), 1)
     }), match.on)
@@ -111,12 +123,13 @@ getBinsAtMedian <- function(dataset, match.on, treat.vec, metric){
     getBins(dataset, match.on, breaks)
   })
 
-  Lstats <- vapply(strataholders, function(s) {
-    Lstat(get.diffs(s, treat.vec, num.treated, num.control))
+  Lstats <- vapply(bin.lists, function(b) {
+    strataholder <- assignToBins(dataset, match.on, b)
+    Lstat(get.diffs(strataholder, treat.vec, num.treated, num.control))
   }, numeric(1L))
 
   Lstat.med <- sort(Lstats, partial = ceiling(n.coarsenings/2))[ceiling(n.coarsenings/2)]
 
-  return(strataholders[[which(Lstats == Lstat.med)[1]]])
+  return(bin.lists[[which(Lstats == Lstat.med)[1]]])
 
 }

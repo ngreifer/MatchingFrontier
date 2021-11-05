@@ -5,6 +5,7 @@ distToFrontierFSATT <- function(distance.mat, treat.vec){
     treated.ind <- which(treat.vec == 1)
     control.ind <- which(treat.vec == 0)
 
+    N <- length(treat.vec)
     N1 <- length(treated.ind)
 
     #Find closest matches to treated units (rows)
@@ -15,6 +16,8 @@ distToFrontierFSATT <- function(distance.mat, treat.vec){
 
     #Extract distances to closest matches
     min.distances <- distance.mat[cbind(seq_len(nrow(distance.mat)), row.mins.inds)]
+    min.distances.full <- rep(NA, N)
+    min.distances.full[treated.ind] <- min.distances
 
     inds <- seq_len(N1)
 
@@ -23,13 +26,13 @@ distToFrontierFSATT <- function(distance.mat, treat.vec){
 
     #Create list of drop order, starting with dropping no one
     #Entries will be empty when there are ties (which are grouped together)
-    drop.order <- c(list(integer(0)), lapply(c(rev(inds)), function(i) which(ranks == i)))
+    drop.order <- c(list(integer(0)), lapply(rev(inds), function(i) treated.ind[ranks == i]))
 
     #Empty entries to remove (except no drop)
     empty <- c(which(lengths(drop.order) == 0)[-1], N1 + 1)
 
     #Sort distances to closest matches from smallest to largest
-    sorted.min.distances <- c(0, rev(min.distances[unlist(drop.order)]))
+    sorted.min.distances <- c(0, rev(min.distances.full[unlist(drop.order)]))
 
     #Xs: how many have been removed at each step
     Xs <- c(0, inds)[-empty]
@@ -39,7 +42,7 @@ distToFrontierFSATT <- function(distance.mat, treat.vec){
 
     drop.order[empty] <- NULL
 
-    matched.to.full <- rep(NA, length(treat.vec))
+    matched.to.full <- rep(NA, N)
     matched.to.full[treated.ind] <- matched.to
 
     # Checks to confirm monotonically decreasing. Since

@@ -17,8 +17,9 @@ Description: Returns the subset of the data with the minimum imbalance for
 	     of causal effects for each subset size, functions for visualization
 	     and data export, and functions for calculating
 	     model dependence as proposed by Athey and Imbens. 
-URL: https://projects.iq.harvard.edu/frontier
-Depends: R(>= 4.0.0)
+URL: https://projects.iq.harvard.edu/frontier, https://iqss.github.io/MatchingFrontier
+BugReports: https://github.com/IQSS/MatchingFrontier/issues
+Depends: R (>= 4.0.0)
 Imports: 
     MatchIt (>= 4.0.0),
     ggplot2 (>= 3.3.5),

@@ -70,12 +70,12 @@ frontier_to_matchit <- function(frontier.object, N, Ndrop) {
   info <- list(method = method,
                replace = if (inherits(frontier.object, "distFrontier")) TRUE else NULL,
                mahalanobis = FALSE,
-               distance_is_matrix = frontier.object$metric == "Custom")
+               distance_is_matrix = frontier.object$metric == "custom")
   if (inherits(frontier.object, "distFrontier")) {
     info$distance <- "user"
     attr(info$distance, "custom") <- switch(frontier.object$metric,
-                                            "Mahal" = "Mahalanobis",
-                                            "Euclid" = "Euclidean",
+                                            "mahal" = "Mahalanobis",
+                                            "euclid" = "Euclidean",
                                             NULL)
   }
 

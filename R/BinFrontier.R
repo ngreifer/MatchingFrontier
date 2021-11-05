@@ -5,19 +5,20 @@ BinFrontier <- function(treatment, dataset, formula, metric, QOI, breaks, match.
   if (verbose) cat("Computing bins...\n")
 
   if (endsWith(metric, "median")) {
-    binnings <- getBinsAtMedian(dataset, match.on, treat, metric)
+    bins.list <- getBinsAtMedian(dataset, match.on, treat, metric)
   }
   else {
-    binnings <- getBins(dataset, match.on, breaks)
+    bins.list <- getBins(dataset, match.on, breaks)
   }
+  strataholder <- assignToBins(dataset, match.on, bins.list)
 
   if (verbose) cat("Calculating frontier...\n")
 
   if (QOI == "FSATE") {
-    frontier <- binsToFrontierFSATE(binnings, treat, metric)
+    frontier <- binsToFrontierFSATE(strataholder, treat, metric)
   }
   else if (QOI == "SATT") {
-    frontier <- binsToFrontierSATT(binnings, treat, metric)
+    frontier <- binsToFrontierSATT(strataholder, treat, metric)
   }
 
   if (verbose) cat("Done!\n")

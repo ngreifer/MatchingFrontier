@@ -3,24 +3,24 @@ DistFrontier <- function(treatment, dataset, formula, metric, QOI, distance.mat 
 
   treat <- dataset[[treatment]]
 
-  if (verbose && metric != "Custom") cat("Computing distance matrix...\n")
+  if (verbose && metric != "custom") cat("Computing distance matrix...\n")
 
-  if (metric == "Mahal") {
+  if (metric == "mahal") {
     covs.mat <- get.covs.matrix(formula, dataset)
     distance.mat <- calculateMdist(covs.mat, treat)
   }
-  else if (metric == "Euclid") {
+  else if (metric == "euclid") {
     covs.mat <- get.covs.matrix(formula, dataset)
     distance.mat <- calculateEdist(covs.mat, treat)
   }
-  else if (metric == "Custom") {
+  else if (metric == "custom") {
     if (is.null(distance.mat)) {
-      customStop("'distance.mat' must be specified when metric = \"Custom\".", "makeFrontier()")
+      customStop("'distance.mat' must be specified when metric = \"custom\".", "makeFrontier()")
     }
     if (!is.matrix(distance.mat) || !is.numeric(distance.mat) ||
         nrow(distance.mat) != sum(treat == 1) || ncol(distance.mat) != sum(treat == 0) ||
         anyNA(distance.mat)) {
-      customStop("'distance.mat' must be an N1 x N0 numeric matrix when metric = \"Custom\".", "makeFrontier()")
+      customStop("'distance.mat' must be an N1 x N0 numeric matrix when metric = \"custom\".", "makeFrontier()")
     }
   }
 

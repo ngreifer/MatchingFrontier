@@ -45,8 +45,9 @@ A \code{matchit} object. See \pkgfun{MatchIt}{matchit} for further details. The 
 data("lalonde", package = "MatchIt")
 
 #Pair distance frontier for FSATT
-f1 <- makeFrontier(treat ~ age + educ + married + re74, data = lalonde,
-                   QOI = "FSATT", metric = "Mahal")
+f1 <- makeFrontier(treat ~ age + educ + married + re74,
+                   data = lalonde, QOI = "FSATT",
+                   metric = "mahal")
 plot(f1)
 
 #Convert to matchit object after dropping 120 treated units

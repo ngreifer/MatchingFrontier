@@ -60,8 +60,9 @@ In addition to their base class (e.g., \code{data.frame} or \code{tbl}), returne
 data("lalonde", package = "MatchIt")
 
 #Pair distance frontier for FSATT
-f1 <- makeFrontier(treat ~ age + educ + married + re74, data = lalonde,
-                   QOI = "FSATT", metric = "Mahal")
+f1 <- makeFrontier(treat ~ age + educ + married + re74,
+                   data = lalonde, QOI = "FSATT",
+                   metric = "mahal")
 
 plot(f1)
 

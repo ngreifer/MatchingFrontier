@@ -17,7 +17,7 @@ output:
 
 * `QOI` can now be one of `"SATE"` (sample average treatment effect), `"FSATE"` (feasible sample average treatment effect), `"SATT"` (sample average treatment effect in the treated), or `"FSATT"` (feasible sample average treatment effect in the treated).
 
-* The different types of frontiers are now available depending on the imbalance metric supplied to `metric`. These include pair distance-based frontiers, bin-based frontiers, and energy distance-based frontiers. For pair distance-based frontiers, `metric` can be one of `"Mahal"`, `"Euclid"`, or "`Custom"`. For bin-based frontiers, `metric` can be one `"L1"`, `"L2"`, `"L1median"`, or `"L2median"`. For energy distance-based frontiers, `metric` can be `"Energy"`. Not all `metric`s are available with all `QOI`s, but the ones available have expanded from previous versions.
+* The different types of frontiers are now available depending on the imbalance metric supplied to `metric`. These include pair distance-based frontiers, bin-based frontiers, and energy distance-based frontiers. For pair distance-based frontiers, `metric` can be one of `"mahal"`, `"euclid"`, or "`custom"`. For bin-based frontiers, `metric` can be one `"L1"`, `"L2"`, `"L1median"`, or `"L2median"`. For energy distance-based frontiers, `metric` can be `"energy"`. Not all `metric`s are available with all `QOI`s, but the ones available have expanded from previous versions. The argument is now case-insensitive (i.e., so old `metric`s like `"Mahal"` still work).
 
 * Bugs in how the balance statistics are computed have been fixed.
 
