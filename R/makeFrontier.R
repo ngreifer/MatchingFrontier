@@ -23,7 +23,7 @@ makeFrontier.data.frame <- function(x, treatment, match.on, QOI = 'FSATT',
   formula <- reformulate(match.on, treatment)
 
   makeFrontier_internal(x, treatment, match.on, formula, QOI,
-                        metric, breaks, distance.mat, call)
+                        metric, breaks, distance.mat, call, verbose)
 }
 
 makeFrontier.formula <- function(formula, data, QOI = 'FSATT',
@@ -49,7 +49,7 @@ makeFrontier.formula <- function(formula, data, QOI = 'FSATT',
   data[[treatment]] <- binarize(data[[treatment]])
 
   makeFrontier_internal(data, treatment, match.on, formula, QOI,
-                        metric, breaks, distance.mat, call)
+                        metric, breaks, distance.mat, call, verbose)
 }
 
 makeFrontier_internal <- function(dataset, treatment, match.on, formula, QOI = 'FSATT',
