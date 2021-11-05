@@ -33,7 +33,7 @@ mahal.frontier <- makeFrontier(treat ~ age + educ + race + married +
                                  nodegree + re74 + re75,
                                data = lalonde, 
                                QOI = "FSATT", 
-                               metric = "Mahal")
+                               metric = "mahal")
 
 mahal.frontier
 ```
