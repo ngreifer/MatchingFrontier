@@ -26,68 +26,74 @@ plot.matchFrontier <- function(x, covs = NULL, stat = "std-diff", ...) {
 
     if (stat == "std-diff") {
       sf <- switch(x$QOI,
-                   "SATE" =, "FSATE" = sqrt(.5*(vapply(dataset[x$dataset[[x$treatment]] == 1,], var, numeric(1L)) +
-                                                  vapply(dataset[x$dataset[[x$treatment]] == 0,], var, numeric(1L)))),
-                   "SATT" =, "FSATT" = vapply(dataset[x$dataset[[x$treatment]] == 1,], sd, numeric(1L)))
-      stat.fun <- function(x, t, d, w = NULL) {
-        (w_m(d[[x]][d[[t]] == 1], w[d[[t]]==1]) -
-           w_m(d[[x]][d[[t]] == 0], w[d[[t]]==0])) / sf[x]
+                   "SATE" =, "FSATE" = sqrt(.5*(vapply(dataset[x$dataset[[x$treatment]] == 1,, drop = FALSE], var, numeric(1L)) +
+                                                  vapply(dataset[x$dataset[[x$treatment]] == 0,, drop = FALSE], var, numeric(1L)))),
+                   "SATT" =, "FSATT" = vapply(dataset[x$dataset[[x$treatment]] == 1,,drop = FALSE], sd, numeric(1L)))
+      stat.fun <- function(v, t, d, w = NULL) {
+        (w_m(d[[v]][d[[t]] == 1], w[d[[t]]==1]) -
+           w_m(d[[v]][d[[t]] == 0], w[d[[t]]==0])) / sf[v]
       }
 
     }
     else if (stat == "diff") {
-      stat.fun <- function(x, t, d, w = NULL) {
-        (w_m(d[[x]][d[[t]] == 1], w[d[[t]]==1]) -
-           w_m(d[[x]][d[[t]] == 0], w[d[[t]]==0]))
+      stat.fun <- function(v, t, d, w = NULL) {
+        (w_m(d[[v]][d[[t]] == 1], w[d[[t]]==1]) -
+           w_m(d[[v]][d[[t]] == 0], w[d[[t]]==0]))
       }
     }
     else if (stat == "ks") {
-      bin.vars <- vapply(dataset, function(x) length(unique(x)) <= 2, logical(1L))
+      bin.vars <- vapply(dataset, function(V) length(unique(V)) <= 2, logical(1L))
 
-      stat.fun <- function(x, t, d, w = NULL) {
-        if (bin.vars[x]) {
-          abs(w_m(d[[x]][d[[t]] == 1], w[d[[t]] == 1]) -
-                w_m(d[[x]][d[[t]] == 0], w[d[[t]] == 0]))
+      stat.fun <- function(v, t, d, w = NULL) {
+        if (bin.vars[v]) {
+          abs(w_m(d[[v]][d[[t]] == 1], w[d[[t]] == 1]) -
+                w_m(d[[v]][d[[t]] == 0], w[d[[t]] == 0]))
         }
         else {
-          w_ks(d[[x]], d[[t]], w)
+          w_ks(d[[v]], d[[t]], w)
         }
       }
     }
     else if (stat == "std-mean") {
       center <- switch(x$QOI,
                        "SATE" =, "FSATE" = colMeans(dataset),
-                       "SATT" =, "FSATT" = colMeans(dataset[x$dataset[[x$treatment]] == 1, ]))
+                       "SATT" =, "FSATT" = colMeans(dataset[x$dataset[[x$treatment]] == 1,,drop = FALSE]))
       sf <- switch(x$QOI,
-                   "SATE" =, "FSATE" = sqrt(.5*(vapply(dataset[x$dataset[[x$treatment]] == 1,], var, numeric(1L)) +
-                                                  vapply(dataset[x$dataset[[x$treatment]] == 0,], var, numeric(1L)))),
-                   "SATT" =, "FSATT" = vapply(dataset[x$dataset[[x$treatment]] == 1,], sd, numeric(1L)))
+                   "SATE" =, "FSATE" = sqrt(.5*(vapply(dataset[x$dataset[[x$treatment]] == 1,,drop = FALSE], var, numeric(1L)) +
+                                                  vapply(dataset[x$dataset[[x$treatment]] == 0,,drop = FALSE], var, numeric(1L)))),
+                   "SATT" =, "FSATT" = vapply(dataset[x$dataset[[x$treatment]] == 1,,drop = FALSE], sd, numeric(1L)))
 
-      stat.fun <- function(x, t, d, w = NULL) {
-        (w_m(d[[x]], w) - center[x]) / sf[x]
+      stat.fun <- function(v, t, d, w = NULL) {
+        (w_m(d[[v]], w) - center[v]) / sf[v]
       }
     }
     else if (stat == "mean") {
-      stat.fun <- function(x, t, d, w = NULL) {
-        w_m(d[[x]], w)
+      stat.fun <- function(v, t, d, w = NULL) {
+        w_m(d[[v]], w)
       }
     }
     else if (stat == "ks-target") {
-      bin.vars <- vapply(dataset, function(x) length(unique(x)) <= 2, logical(1L))
+
+      bin.vars <- vapply(dataset, function(V) length(unique(V)) <= 2, logical(1L))
       if (any(bin.vars)) {
           center <- switch(x$QOI,
                            "SATE" =, "FSATE" = colMeans(dataset[bin.vars]),
-                           "SATT" =, "FSATT" = colMeans(dataset[x$dataset[[x$treatment]] == 1, bin.vars]))
+                           "SATT" =, "FSATT" = colMeans(dataset[x$dataset[[x$treatment]] == 1, bin.vars, drop = FALSE]))
       }
 
-      stat.fun <- function(x, t, d, w = NULL) {
-        if (bin.vars[x]) {
-          abs(w_m(d[[x]], w) - center[x])
+      stat.fun <- function(v, t, d, w = NULL) {
+        if (bin.vars[v]) {
+          abs(w_m(d[[v]], w) - center[v])
         }
         else {
-          w_ks(c(dataset[[x]], d[[x]]),
-               treat = c(rep(1, nrow(dataset)), rep(0, nrow(d))),
-               w = c(rep(1, nrow(dataset)), w))
+          if (is.null(w)) w <- rep(1, nrow(d))
+          switch(x$QOI,
+                 "SATE" =, "FSATE" = w_ks(c(dataset[[v]], d[[v]]),
+                                          treat = c(rep(1, nrow(dataset)), rep(0, nrow(d))),
+                                          w = c(rep(1, nrow(dataset)), w)),
+                 "SATT" =, "FSATT" = w_ks(c(dataset[[v]][dataset[[t]] == 1], d[[v]]),
+                                          treat = c(rep(1, sum(dataset[[t]] == 1)), rep(0, nrow(d))),
+                                          w = c(rep(1, sum(dataset[[t]] == 1)), w)))
         }
       }
     }
@@ -127,7 +133,7 @@ plot.matchFrontier <- function(x, covs = NULL, stat = "std-diff", ...) {
     if (stat == "mean") {
       center <- switch(x$QOI,
                        "SATE" =, "FSATE" = colMeans(dataset[cov.names]),
-                       "SATT" =, "FSATT" = colMeans(dataset[x$dataset[[x$treatment]] == 1, cov.names]))
+                       "SATT" =, "FSATT" = colMeans(dataset[x$dataset[[x$treatment]] == 1, cov.names, drop = FALSE]))
       original.means <- data.frame(Covariate = cov.names, Val = center)
 
       p <- p + geom_hline(data = original.means,
