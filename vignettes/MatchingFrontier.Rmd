@@ -250,13 +250,13 @@ Here we see that had we used other model specifications, we could have found tre
 
 ### Estimating effects along the frontier
 
-The next step is to estimate treatment effects along the frontier. Doing so allows us to examine the sensitivity of our results to the choice of our sample size/imbalance trade-off. To estimates these effects, we use the `estimatEffects()` function. This function estimates treatment effects, confidence intervals, and, optionally, model dependence bounds at each point on the frontier. With a large frontier, this can take a long time, so we can request that only some proportion of the points along the frontier have estimates using the `prop.estimated` argument. We will request the extreme bounds procedure be used to assess model sensitivity, as we did for the single point estimate above.
+The next step is to estimate treatment effects along the frontier. Doing so allows us to examine the sensitivity of our results to the choice of our sample size/imbalance trade-off. To estimates these effects, we use the `estimatEffects()` function. This function estimates treatment effects, confidence intervals, and, optionally, model dependence bounds at each point on the frontier. With a large frontier, this can take a long time, so we can request that a smaller number of the points along the frontier be estimated using the `n.estimated` argument. We will request the extreme bounds procedure be used to assess model sensitivity, as we did for the single point estimate above.
 
 ```{r}
 mahal.estimates <- estimateEffects(mahal.frontier, 
                                    base.form = re78 ~ treat + age + educ +
                                      race + married + nodegree + re74 + re75,
-                                   prop.estimated = .5,
+                                   n.estimated = 100,
                                    method = "extreme-bounds",
                                    verbose = FALSE,
                                    seed = 12345)

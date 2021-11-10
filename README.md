@@ -34,7 +34,13 @@ mahal.frontier <- makeFrontier(treat ~ age + educ + race + married +
                                data = lalonde, 
                                QOI = "FSATT", 
                                metric = "mahal")
+```
 
+    #> Computing distance matrix...
+    #> Calculating frontier...
+    #> Done!
+
+``` r
 mahal.frontier
 ```
 
@@ -60,7 +66,6 @@ We can then estimate effects along the frontier.
 ``` r
 mahal.estimates <- estimateEffects(mahal.frontier, 
                                    base.form = re78 ~ treat,
-                                   prop.estimated = .5,
                                    verbose = FALSE)
 mahal.estimates
 ```
@@ -68,7 +73,7 @@ mahal.estimates
     #> A frontierEstimates object
     #> - quantity of interest: FSATT
     #> - model sensitivity method: none
-    #> - number of estimates: 69
+    #> - number of estimates: 137
     #> - treatment: treat
     #> - covariates: age, educ, race, married, nodegree, re74, re75
     #> - outcome model: re78 ~ treat

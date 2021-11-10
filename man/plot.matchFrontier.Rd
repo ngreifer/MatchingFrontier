@@ -8,7 +8,7 @@ Plot the Balance-Sample Size Frontier
 Plots the balance-sample size frontier for the supplied \code{matchFrontier} object. Can also plot covariate-specific mean differences and means to assess balance on individual covariates across the frontier.
 }
 \usage{
-\method{plot}{matchFrontier}(x, covs = NULL, stat = "std-diff", ...)
+\method{plot}{matchFrontier}(x, covs = NULL, stat = "std-diff", n.estimated = 250, ...)
 }
 
 \arguments{
@@ -20,6 +20,9 @@ the names of covariates for which mean differences or means are to be displayed.
 }
   \item{stat}{
 if \code{covs} is not \code{NULL}, the statistic to display for each variable across the frontier. Allowable options include \code{"std-diff"} for standardized mean differences (the default), \code{"diff"} for raw mean differences, \code{"ks"} for Kolmogorov-Smirnov statistics, \code{"std-mean"} for standardized means, \code{"mean"} for raw means, and \code{"ks-target"} for sample-target Kolmogorov-Smirnov statistics. See Details. Abbreviations allowed.
+}
+  \item{n.estimated}{
+if \code{covs} is not \code{NULL}, the number of points along the frontier for which to compute balance statistics. Computing statistics at every point on the frontier can be time-consuming for large frontiers, especially when computing Kolmogorov-Smirnov statistics, so using values less than the number of points can save time at the expense of providing less detail in the frontier plot. The default is 250 or the number of points, whichever is smaller. Ignored when \code{covs = NULL}.
 }
   \item{\dots}{
 if \code{covs} is \code{NULL}, further arguments passed to \pkgfun2{ggplot2}{geom_line}{ggplot2::geom_line} to control the appearance of the plot (e.g., \code{color}, \code{size}, etc.). Ignored otherwise.

@@ -53,7 +53,6 @@ We can then estimate effects along the frontier.
 ```{r}
 mahal.estimates <- estimateEffects(mahal.frontier, 
                                    base.form = re78 ~ treat,
-                                   prop.estimated = .5,
                                    verbose = FALSE)
 mahal.estimates
 ```
