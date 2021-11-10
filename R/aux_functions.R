@@ -294,7 +294,7 @@ process_safe_for_model <- function(data, formula = NULL) {
   for (i in vars) {
     nu <- length(unique(data[[i]]))
     if (nu == 1L) data[[i]] <- 1
-    else if (nu == 2L) data[[i]] <- as.numeric(data[[i]] == data[[i]][1])
+    else if (nu == 2L) data[[i]] <- binarize(data[[i]])
     else if (is.character(data[[i]]) || is.factor(data[[i]])) data[[i]] <- factor(data[[i]])
   }
   data
@@ -325,4 +325,16 @@ safe_ci <- function(fit, treatment, vcov. = sandwich::vcovHC, type = "HC3", alph
   }
 
   lmtest::coefci(fit, treatment, vcov. = v, level = 1 - alpha)
+}
+
+#Add ...names() for old versions of R; not in backports (yet)
+if (getRversion() < "4.1.0" && !exists("...names", envir = asNamespace("backports"), inherits = FALSE)) {
+  ...names <- function() {
+    if ("..." %in% ls(envir = parent.frame(), all.names = TRUE)) {
+      as.character(names(evalq(list(...), envir = parent.frame())))
+    }
+    else {
+      stop("incorrect context: the current call has no '...' to look in")
+    }
+  }
 }
