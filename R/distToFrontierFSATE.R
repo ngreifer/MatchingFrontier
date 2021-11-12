@@ -1,9 +1,14 @@
 #Find matches for all units, then discard units with greatest distance
-distToFrontierFSATE <- function(distance.mat, treat.vec){
+distToFrontierFSATE <- function(distance.mat, treat.vec, verbose){
+
   N <- length(treat.vec)
 
   treated.ind <- which(treat.vec == 1)
   control.ind <- which(treat.vec == 0)
+
+  if (verbose) {
+    pb <- txtProgressBar(min = 1, max = N, style = 3)
+  }
 
   #Find closest matches to treated units (rows) and control units (cols)
   row.mins.inds <- apply(distance.mat, 1, function(x) which.min(x))
@@ -41,6 +46,11 @@ distToFrontierFSATE <- function(distance.mat, treat.vec){
   Ys <- rev(cumsum(sorted.min.distances))[-empty] / (N - Xs)
 
   drop.order[empty] <- NULL
+
+  if (verbose) {
+    setTxtProgressBar(pb, N)
+    close(pb)
+  }
 
   # Checks to confirm monotonically decreasing. Since
   # that's theoretically impossible, if the condition is

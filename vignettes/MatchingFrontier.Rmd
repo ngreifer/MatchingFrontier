@@ -151,7 +151,13 @@ We can use `summary()` on the `matchFrontier` object to reveal information about
 summary(mahal.frontier)
 ```
 
-From the plot and summary we can see that the initial average Mahalanobis imbalance after matching but before discarding any units was about .338. After dropping 172 treated units, the imbalance falls to 0 (i.e., indicating that the remaining units are exactly matched on all the covariates). Dropping this many units has left us with only about 13 pairs remaining, which is typically far too few to make valid inferences on. Thus, the ideal sample lies somewhere between the beginning and end of the frontier.
+From the plot and summary we can see that the initial average Mahalanobis imbalance after matching but before discarding any units was about .338. After dropping 172 treated units, the imbalance falls to 0 (i.e., indicating that the remaining units are exactly matched on all the covariates). Dropping this many units has left us with only about 13 pairs remaining, which is typically far too few to make valid inferences on. Thus, the ideal sample lies somewhere between the beginning and end of the frontier. We can further examine the imbalance at specific intermediate points along the frontier by supplying an argument to `N`, which corresponds to the number of units remaining, or `Ndrop`, which corresponds to the number of units dropped:
+
+```{r}
+summary(mahal.frontier, Ndrop = seq(40, 120, by = 20))
+# summary(mahal.frontier, N = seq(65, 145, by = 20)) #same thing
+```
+
 
 We can also view information about balance for individual covariates using `plot.matchFrontier()`. To do so, we supply the names of individual covariates to the `covs` argument of `plot.matchFrontier()` and set `stat = "std-diff"` for standardized mean differences, which are useful for continuous covariates, and `stat = "diff`, and for raw mean differences, which are useful for sets of variables that are on the same scale (like binary covariates).
 
@@ -221,7 +227,7 @@ The returned dataset contains only the matched units for use in estimating treat
 
 We can use regression to estimate the treatment effect in the matched sample. See `vignette("estimating-effects", package = "MatchIt")` for more details on estimating treatment effects after matching with replacement. Here we use a linear regression adjusting for the matched covariates. We must include use the matching weights in the regression and use robust standard errors to account for the weights [@hill2006].
 
-```{r}
+```{r,warn=F}
 library("lmtest")
 library("sandwich")
 
@@ -250,13 +256,13 @@ Here we see that had we used other model specifications, we could have found tre
 
 ### Estimating effects along the frontier
 
-The next step is to estimate treatment effects along the frontier. Doing so allows us to examine the sensitivity of our results to the choice of our sample size/imbalance trade-off. To estimates these effects, we use the `estimatEffects()` function. This function estimates treatment effects, confidence intervals, and, optionally, model dependence bounds at each point on the frontier. With a large frontier, this can take a long time, so we can request that only some proportion of the points along the frontier have estimates using the `prop.estimated` argument. We will request the extreme bounds procedure be used to assess model sensitivity, as we did for the single point estimate above.
+The next step is to estimate treatment effects along the frontier. Doing so allows us to examine the sensitivity of our results to the choice of our sample size/imbalance trade-off. To estimates these effects, we use the `estimatEffects()` function. This function estimates treatment effects, confidence intervals, and, optionally, model dependence bounds at each point on the frontier. With a large frontier, this can take a long time, so we can request that a smaller number of the points along the frontier be estimated using the `n.estimated` argument. We will request the extreme bounds procedure be used to assess model sensitivity, as we did for the single point estimate above.
 
 ```{r}
 mahal.estimates <- estimateEffects(mahal.frontier, 
                                    base.form = re78 ~ treat + age + educ +
                                      race + married + nodegree + re74 + re75,
-                                   prop.estimated = .5,
+                                   n.estimated = 100,
                                    method = "extreme-bounds",
                                    verbose = FALSE,
                                    seed = 12345)
@@ -309,7 +315,14 @@ In contrast to pair distance-based frontiers, energy distance-based frontiers ar
 summary(energy.frontier)
 ```
 
-Here we can see that the balance is best when 182 units remain, though the plot indicates that it is possible to have similar balance while discarding fewer units. We can use the steps previously described to extract the dataset at that point on the frontier and estimate its treatment effect and model dependence. First we will turn that point into a `matchit` object and assess balance on the covariates.
+Here we can see that the balance is best when 182 units remain, though the plot indicates that it is possible to have similar balance while discarding fewer units. We can identify these points using `summary()` with `N` or `Ndrop` specified:
+
+```{r}
+summary(energy.frontier, N = seq(182, 222, by = 10))
+```
+
+
+We can use the steps previously described to extract the dataset at a point on the frontier and estimate its treatment effect and model dependence. First we will turn that point into a `matchit` object and assess balance on the covariates.
 
 ```{r}
 energy.matchit <- frontier_to_matchit(energy.frontier, N = 182)

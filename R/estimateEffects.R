@@ -1,7 +1,7 @@
 estimateEffects <- function(frontier.object,
                             outcome,
                             base.form = NULL,
-                            prop.estimated = 1,
+                            n.estimated = 250,
                             method = c("none", "extreme-bounds", "athey-imbens"),
                             model.dependence.ests = 100,
                             specifications = NULL,
@@ -9,7 +9,8 @@ estimateEffects <- function(frontier.object,
                             cutpoint.method = c("mean", "median", "segmented"),
                             seed = NULL,
                             alpha = 0.05,
-                            verbose = TRUE) {
+                            verbose = TRUE,
+                            ...) {
 
   set.seed(seed)
   call <- match.call()
@@ -19,8 +20,19 @@ estimateEffects <- function(frontier.object,
   }
 
   # These are the points that we'll estimate
-  n.steps <-  length(frontier.object$frontier$Xs)
-  point.inds <- unique(round(seq(1, n.steps, length.out = n.steps * prop.estimated)))
+  n.steps <- length(frontier.object$frontier$Xs)
+  if ("prop.estimated" %in% ...names()) {
+    prop.estimated <- list(...)$prop.estimated
+    if (length(prop.estimated) != 1 || !is.numeric(prop.estimated)) {
+      customStop("'prop.estimated' must be a single number.", "plot()")
+    }
+    n.estimated <- ceiling(n.steps * prop.estimated)
+  }
+  else if (length(n.estimated) != 1 || !is.numeric(n.estimated)) {
+    customStop("'n.estimated' must be a single number.", "plot()")
+  }
+
+  point.inds <- unique(round(seq(1, n.steps, length.out = min(n.estimated, n.steps))))
   coefs <- numeric(length(point.inds))
   CIs <- vector("list", length = length(point.inds))
   attr(CIs, "CIlevel") <- 1 - alpha

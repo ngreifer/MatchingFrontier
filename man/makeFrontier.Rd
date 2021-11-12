@@ -143,6 +143,7 @@ f1 <- makeFrontier(treat ~ age + educ + married + re74,
 f1
 plot(f1)
 summary(f1)
+summary(f1, N = c(20, 40, 60))
 
 #L1 distance frontier for FSATE
 f2 <- makeFrontier(treat ~ age + educ + married + re74,
@@ -161,4 +162,5 @@ f3 <- makeFrontier(treat ~ age + educ + married + re74,
 f3
 plot(f3)
 summary(f3)
+summary(f3, Ndrop = seq(300, 500, by = 50))
 }

@@ -12,7 +12,7 @@ Estimate Effects on the Frontier
 estimateEffects(frontier.object,
                 outcome,
                 base.form = NULL,
-                prop.estimated = 1,
+                n.estimated = 250,
                 method = c("none", "extreme-bounds",
                            "athey-imbens"),
                 model.dependence.ests = 100,
@@ -22,7 +22,8 @@ estimateEffects(frontier.object,
                                     "segmented"),
                 seed = NULL,
                 alpha = 0.05,
-                verbose = TRUE)
+                verbose = TRUE,
+                ...)
 
 \method{print}{frontierEstimates}(x, ...)
 }
@@ -37,8 +38,8 @@ the name of the outcome variable in the dataset supplied to \fun{makeFrontier}. 
   \item{base.form}{
 a model formula with the outcome on the left hand side and the treatment (and optionally covariates) on the right hand side. The model is used to estimate treatment effects at each point along the frontier as well as their model sensitivity (if requested). If omitted, will use a simple regression of the supplied outcome variable on the treatment.
 }
-  \item{prop.estimated}{
-the proportion of points along the frontier to estimate. Should be a value between 0 and 1. Estimating effects at every point on the frontier can be time-consuming for large frontiers, especially when model dependence bounds are also computed, so using values less than 1 can save time at the expense of providing less detail in the frontier estimates plot.
+  \item{n.estimated}{
+the number of points along the frontier to estimate. Estimating effects at every point on the frontier can be time-consuming for large frontiers, especially when model dependence bounds are also computed, so using values less than the number of points can save time at the expense of providing less detail in the frontier estimates plot. The default is 250 or the number of points, whichever is smaller.
 }
   \item{method}{
 the method of computing model dependence bounds. Can be one of \code{"extreme-bounds"} or \code{"athey-imbens"} for the extreme bounds or Athey-Imbens procedures, respectively, or \code{"none"} to not compute model dependence bounds. Abbreviations allowed. Default is no model dependence bounds. See \fun{modelDependence}.
@@ -56,7 +57,9 @@ the alpha value used to select the critical test statistic used in computing con
 a \code{frontierEstimates} object; the output of a call to \code{estimateEffects()}.
 }
   \item{\dots}{
-ignored.
+for \code{estimateEffects()}, \code{prop.estimated}, which determines the proportion of points along the frontier to estimate, can be passed instead of \code{n.estimated}. Prior versions of \code{estimateEffects()} used \code{prop.estimated}, and this will continue to be supported.
+
+Ignored for \code{print()}.
 }
 }
 \details{
@@ -109,7 +112,7 @@ f1
 e1 <- estimateEffects(f1,
                       base.form = re78 ~ treat + age +
                                     educ + married + re74,
-                      prop.estimated = .2, #Should be higher
+                      n.estimated = 20, #Should be higher
                       method = "extreme-bounds",
                       model.dependence.ests = 51)
 e1

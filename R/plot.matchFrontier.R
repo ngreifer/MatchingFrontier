@@ -1,4 +1,4 @@
-plot.matchFrontier <- function(x, covs = NULL, stat = "std-diff", ...) {
+plot.matchFrontier <- function(x, covs = NULL, stat = "std-diff", n.estimated, ...) {
 
   xlab <- switch(x$QOI,
                  "SATE" = "Number of units dropped",
@@ -16,10 +16,37 @@ plot.matchFrontier <- function(x, covs = NULL, stat = "std-diff", ...) {
   p <- ggplot()
 
   if (is.null(covs)) {
+    if (!missing(n.estimated)) {
+      customWarning("'n.estimated' is ignored when covs = NULL.", "plot.matchFrontier()")
+    }
     p <- p + plot_geom(data = NULL, mapping = aes(x = x$frontier$Xs, y = x$frontier$Ys), ...)
   }
   else {
+    n.steps <-  length(x$frontier$Xs)
+    if (missing(n.estimated)) n.estimated <- 250
+    else {
+      if (length(n.estimated) != 1 || !is.numeric(n.estimated)) {
+        customStop("'n.estimated' must be a single number.", "plot.matchFrontier()")
+      }
+    }
+    point.inds <- unique(round(seq(1, n.steps, length.out = min(n.estimated, n.steps))))
+
     stat <- match_arg(stat, c("std-diff", "diff", "ks", "std-mean", "mean", "ks-target"))
+
+    if (is.numeric(covs)) {
+      if (!all(covs %in% seq_along(x$match.on))) {
+        customStop(paste0("if 'covs' is specified as numeric, the values must be between 1 and ", length(x$match.on), "."), "plot.matchFrontier()")
+      }
+      covs <- x$match.on[covs]
+    }
+    else if (is.character(covs)) {
+      if (!all(covs %in% names(x$dataset))) {
+        customStop("all variables in 'covs' must be variables in the dataset supplied to makeFrontier().", "plot.matchFrontier()")
+      }
+    }
+    else {
+      customStop("'covs' must be a numeric or character vector.", "plot.matchFrontier()")
+    }
 
     dataset <- as.data.frame(get.covs.matrix(data = x$dataset[covs]))
     cov.names <- names(dataset)
@@ -98,11 +125,11 @@ plot.matchFrontier <- function(x, covs = NULL, stat = "std-diff", ...) {
       }
     }
 
-    Xs.long <- rep(x$frontier$Xs, ncol(dataset))
+    Xs.long <- rep(x$frontier$Xs[point.inds], ncol(dataset))
     dataset <- setNames(cbind(dataset, x$dataset[[x$treatment]]),
                         c(cov.names, x$treatment))
 
-    cov.stat <- do.call("rbind", lapply(seq_along(x$frontier$Xs), function(i) {
+    cov.stat <- do.call("rbind", lapply(point.inds, function(i) {
       this.dat.inds.to.drop <- unlist(x$frontier$drop.order[seq_len(i)])
 
       m.data <- makeMatchedData(dataset,
