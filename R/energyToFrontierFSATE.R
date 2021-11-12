@@ -1,5 +1,5 @@
 #Remove units to lower between-group energy distance
-energyToFrontierFSATE <- function(distance.mat, treat.vec) {
+energyToFrontierFSATE <- function(distance.mat, treat.vec, verbose) {
   #Energy distance formula:
   #2/n1n0 sum(D[t,c]) - 1/n1n1 sum(D[t,t]) - 1/n0n0 sum(D[c,c])
 
@@ -24,6 +24,10 @@ energyToFrontierFSATE <- function(distance.mat, treat.vec) {
   N1 <- length(treated.ind)
   N0 <- length(control.ind)
 
+  if (verbose) {
+    pb <- txtProgressBar(min = 1, max = N, style = 3)
+  }
+
   d10 <- distance.mat[treated.ind, control.ind, drop = FALSE]
   Sd10 <- sum(d10)
 
@@ -46,6 +50,9 @@ energyToFrontierFSATE <- function(distance.mat, treat.vec) {
     (-1/(N0^2) + 1/((N0-1)^2))*Sd00 +
     (2/((N0-1)*N1))*colSums(d10) -
     (2/((N0-1)^2))*colSums(d00)
+
+
+  if (verbose) setTxtProgressBar(pb, 1)
 
   for (k in seq_len(N)[-1]) {
 
@@ -104,11 +111,20 @@ energyToFrontierFSATE <- function(distance.mat, treat.vec) {
       (-1/(N0^2) + 1/((N0-1)^2))*Sd00 +
       (2/((N0-1)*N1))*colSums(d10) -
       (2/((N0-1)^2))*colSums(d00)
+
+    if (verbose) {
+      setTxtProgressBar(pb, k)
+    }
   }
 
   Ys <- Ys[seq_len(k-1)]
   drop.order <- drop.order[seq_len(k-1)]
   Xs <- cumsum(lengths(drop.order))
+
+  if (verbose) {
+    setTxtProgressBar(pb, N)
+    close(pb)
+  }
 
   return(list(drop.order = drop.order, Xs = Xs, Ys = Ys, distance.mat = distance.mat))
 }

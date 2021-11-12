@@ -1,12 +1,16 @@
 #Find matches for treated units, then discard treated units with greatest distance
 #matched.to is NA for control units
-distToFrontierFSATT <- function(distance.mat, treat.vec){
+distToFrontierFSATT <- function(distance.mat, treat.vec, verbose) {
 
     treated.ind <- which(treat.vec == 1)
     control.ind <- which(treat.vec == 0)
 
     N <- length(treat.vec)
     N1 <- length(treated.ind)
+
+    if (verbose) {
+        pb <- txtProgressBar(min = 1, max = N1, style = 3)
+    }
 
     #Find closest matches to treated units (rows)
     row.mins.inds <- apply(distance.mat, 1, function(x) which.min(x))
@@ -45,10 +49,15 @@ distToFrontierFSATT <- function(distance.mat, treat.vec){
     matched.to.full <- rep(NA, N)
     matched.to.full[treated.ind] <- matched.to
 
+    if (verbose) {
+        setTxtProgressBar(pb, N1)
+        close(pb)
+    }
+
     # Checks to confirm monotonically decreasing. Since
     # that's theoretically impossible, if the condition is
     # met, there's a serious bug somewhere in the code.
-    if(any(diff(Ys) > 0 )){
+    if (any(diff(Ys) > 0 )){
         stop('Something is very wrong. Email ngreifer@iq.harvard.edu.')
     }
     return(list(drop.order = drop.order, Xs = Xs, Ys = Ys, matched.to = matched.to.full, distance.mat = distance.mat))

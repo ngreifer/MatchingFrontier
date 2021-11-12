@@ -1,5 +1,5 @@
 #Remove control units to lower between-group energy distance
-energyToFrontierSATT <- function(distance.mat, treat.vec) {
+energyToFrontierSATT <- function(distance.mat, treat.vec, verbose) {
   #Energy distance formula:
   #2/n1n0 sum(D[t,c]) - 1/n1n1 sum(D[t,t]) - 1/n0n0 sum(D[c,c])
 
@@ -24,6 +24,10 @@ energyToFrontierSATT <- function(distance.mat, treat.vec) {
   N1 <- length(treated.ind)
   N0 <- length(control.ind)
 
+  if (verbose) {
+    pb <- txtProgressBar(min = 1, max = N0, style = 3)
+  }
+
   d10 <- distance.mat[treated.ind, control.ind, drop = FALSE]
   Sd10 <- sum(d10)
 
@@ -45,7 +49,9 @@ energyToFrontierSATT <- function(distance.mat, treat.vec) {
     (2/((N0-1)*N1))*cSd10 -
     (2/((N0-1)^2))*cSd00
 
-  for (k in seq_len(N)[-1]) {
+  if (verbose) setTxtProgressBar(pb, 1)
+
+  for (k in seq_len(N0)[-1]) {
 
     #Find which units have the largest contribution to the energy distance
     largest.contribution <- max(control.contributions)
@@ -88,11 +94,20 @@ energyToFrontierSATT <- function(distance.mat, treat.vec) {
       (-1/(N0^2) + 1/((N0-1)^2))*Sd00 +
       (2/((N0-1)*N1))*cSd10 -
       (2/((N0-1)^2))*cSd00
+
+    if (verbose) {
+      setTxtProgressBar(pb, k)
+    }
   }
 
   Ys <- Ys[seq_len(k-1)]
   drop.order <- drop.order[seq_len(k-1)]
   Xs <- cumsum(lengths(drop.order))
+
+  if (verbose) {
+    setTxtProgressBar(pb, N0)
+    close(pb)
+  }
 
   return(list(drop.order = drop.order, Xs = Xs, Ys = Ys, distance.mat = distance.mat))
 }

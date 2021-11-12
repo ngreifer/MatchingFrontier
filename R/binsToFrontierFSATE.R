@@ -1,4 +1,4 @@
-binsToFrontierFSATE <- function(strataholder, treat.vec, metric = "l1"){
+binsToFrontierFSATE <- function(strataholder, treat.vec, metric = "l1", verbose) {
 
   N1 <- sum(treat.vec[unlist(strataholder)] == 1)
   N0 <- sum(treat.vec[unlist(strataholder)] == 0)
@@ -14,10 +14,17 @@ binsToFrontierFSATE <- function(strataholder, treat.vec, metric = "l1"){
     Lstat <- function(diffs) .5*sqrt(sum(diffs^2))
   }
 
+  if (verbose) {
+    pb <- txtProgressBar(min = 1, max = N, style = 3)
+  }
+
   diffs <- get.diffs(strataholder, treat.vec, N1, N0)
   Ys[1] <- Lstat(diffs)
 
   min.Lstat <- Ys[1]
+
+  if (verbose) setTxtProgressBar(pb, 1)
+
   k <- 1
   repeat {
     k <- k + 1
@@ -50,6 +57,10 @@ binsToFrontierFSATE <- function(strataholder, treat.vec, metric = "l1"){
     Ys[k] <- new.Lstat
     drop.order[[k]] <- drop
 
+    if (verbose) {
+      setTxtProgressBar(pb, k)
+    }
+
   }
 
   empty <- which(lengths(drop.order) == 0)
@@ -57,5 +68,11 @@ binsToFrontierFSATE <- function(strataholder, treat.vec, metric = "l1"){
   Ys <- Ys[-empty]
 
   Xs <- cumsum(lengths(drop.order))
+
+  if (verbose) {
+    setTxtProgressBar(pb, N)
+    close(pb)
+  }
+
   return(list(drop.order = drop.order, Xs = Xs, Ys = Ys))
 }

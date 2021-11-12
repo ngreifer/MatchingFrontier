@@ -15,10 +15,10 @@ BinFrontier <- function(treatment, dataset, formula, metric, QOI, breaks, match.
   if (verbose) cat("Calculating frontier...\n")
 
   if (QOI == "FSATE") {
-    frontier <- binsToFrontierFSATE(strataholder, treat, metric)
+    frontier <- binsToFrontierFSATE(strataholder, treat, metric, verbose)
   }
   else if (QOI == "SATT") {
-    frontier <- binsToFrontierSATT(strataholder, treat, metric)
+    frontier <- binsToFrontierSATT(strataholder, treat, metric, verbose)
   }
 
   if (verbose) cat("Done!\n")

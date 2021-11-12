@@ -27,10 +27,10 @@ DistFrontier <- function(treatment, dataset, formula, metric, QOI, distance.mat 
   if (verbose) cat("Calculating frontier...\n")
 
   if (QOI == "FSATE") {
-    frontier <- distToFrontierFSATE(distance.mat, treat)
+    frontier <- distToFrontierFSATE(distance.mat, treat, verbose)
   }
   else if (QOI == "FSATT") {
-    frontier <- distToFrontierFSATT(distance.mat, treat)
+    frontier <- distToFrontierFSATT(distance.mat, treat, verbose)
   }
 
   if (verbose) cat("Done!\n")

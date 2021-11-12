@@ -19,13 +19,13 @@ EnergyFrontier <- function(treatment, dataset, formula, metric, QOI, distance.ma
   if (verbose) cat("Calculating frontier...\n")
 
   if (QOI == "SATE") {
-    frontier <- energyToFrontierSATE(distance.mat, treat)
+    frontier <- energyToFrontierSATE(distance.mat, treat, verbose)
   }
   else if (QOI == "FSATE") {
-    frontier <- energyToFrontierFSATE(distance.mat, treat)
+    frontier <- energyToFrontierFSATE(distance.mat, treat, verbose)
   }
   else if (QOI == "SATT") {
-    frontier <- energyToFrontierSATT(distance.mat, treat)
+    frontier <- energyToFrontierSATT(distance.mat, treat, verbose)
   }
 
   if (verbose) cat("Done!\n")
