@@ -267,7 +267,7 @@ w_ks <- function(x, treat, w = NULL) {
 
 #Get calling function
 get_calling_function <- function() {
-  package.funs <- getNamespaceExports(packageName()) #Note: doesn't capture S3 methods
+  package.funs <- getNamespaceExports(packageName()) #Note: doesn't capture S3 methods like plot
   function.stack <- unlist(lapply(sys.calls(), function(x) deparse1(x[[1]])))
 
   matching.functions <- package.funs[package.funs %in% function.stack]

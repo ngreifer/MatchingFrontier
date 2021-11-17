@@ -119,4 +119,5 @@ e1
 plot(e1, band = "model-dependence")
 plot(e1, band = "confidence")
 
+summary(e1, Ndrop = c(10, 85))
 }
