@@ -227,7 +227,3 @@ print.frontierEstimates <- function(x, ...){
 
   invisible(x)
 }
-
-summary.frontierEstimates <- function(object, ...) {
-  object
-}
