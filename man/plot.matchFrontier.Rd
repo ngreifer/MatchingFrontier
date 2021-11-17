@@ -8,7 +8,7 @@ Plot the Balance-Sample Size Frontier
 Plots the balance-sample size frontier for the supplied \code{matchFrontier} object. Can also plot covariate-specific mean differences and means to assess balance on individual covariates across the frontier.
 }
 \usage{
-\method{plot}{matchFrontier}(x, covs = NULL, stat = "std-diff", n.estimated = 250, ...)
+\method{plot}{matchFrontier}(x, covs = NULL, stat = "std-diff", n.estimated, ...)
 }
 
 \arguments{

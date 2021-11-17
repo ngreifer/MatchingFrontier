@@ -1,11 +1,12 @@
 \name{summary.frontierEstimates}
 \alias{summary.frontierEstimates}
+\alias{print.summary.frontierEstimates}
 
 \title{
 Summarize a \code{frontierEstimates} object
 }
 \description{
-\cude{summary()} displays the effect estimates, confidence bounds, and, if present, model dependence bounds at user-specified points along the forntier.
+\code{summary()} displays the effect estimates, confidence bounds, and, if present, model dependence bounds at user-specified points along the forntier.
 }
 \usage{
 \method{summary}{frontierEstimates}(object, N, Ndrop, ...)
