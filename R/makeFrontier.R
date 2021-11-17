@@ -102,7 +102,7 @@ makeFrontier_internal <- function(dataset, treatment, match.on, formula, QOI = '
                "FSATT" = sum(dataset[[treatment]] == 1))
   )
 
-  class(out) <- "matchFrontier"
+  class(out) <- c("matchFrontier", paste0(metricType(metric), "Frontier"))
 
   return(out)
 }

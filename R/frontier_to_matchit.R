@@ -36,23 +36,20 @@ frontier_to_matchit <- function(frontier.object, N, Ndrop) {
   lab <- rownames(frontier.object$dataset)
   treat <- setNames(frontier.object$dataset[[frontier.object$treatment]], lab)
 
-  weights <- setNames(rep(0, nrow(frontier.object$dataset)), lab)
 
-  if (inherits(frontier.object, "distFrontier")) {
+  if (!is.null(frontier.object$matched.to)) {
     is.na(frontier.object$matched.to)[drop.inds] <- TRUE
 
     match.matrix <- matrix(lab[frontier.object$matched.to], ncol = 1,
                            dimnames = list(lab, NULL))
 
-    weights[rownames(match.matrix)[!is.na(match.matrix[,1])]] <- 1
-    for (i in unique(match.matrix[!is.na(match.matrix[,1]),1])) weights[i] <- weights[i] + sum(!is.na(match.matrix[,1]) & match.matrix[,1] == i)
+    weights <- as.numeric(!is.na(frontier.object$matched.to)) + tabulate(frontier.object$matched.to, nbins = length(frontier.object$matched.to))
+    names(weights) <- lab
   }
   else {
     match.matrix <- NULL
-    if (frontier.object$QOI %in% c("SATE", "FSATE", "FSATT")) weights[-drop.inds] <- 1
-    else if (frontier.object$QOI %in% c("SATT")) {
-      weights[treat == 1 | (treat == 0 & !seq_along(treat) %in% drop.inds)] <- 1
-    }
+    weights <- setNames(rep(1, nrow(frontier.object$dataset)), lab)
+    weights[drop.inds] <- 0
   }
 
   #Compute sample sizes
