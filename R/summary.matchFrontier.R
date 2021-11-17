@@ -90,8 +90,6 @@ summary.matchFrontier <- function(object, N, Ndrop, ...) {
     selectedN <- numeric(length(N))
     selectedStat <- numeric(length(N))
 
-
-
     Ns <- object$n - object$frontier$Xs
 
     treated.ind <- which(object$dataset[[object$treatment]] == 1)

@@ -1,25 +1,26 @@
 generateDataset <- function(frontier.object, N, Ndrop, weights = "weights",
                             dup = FALSE, subclass = "subclass", id = "id") {
 
+  if (!inherits(frontier.object, "matchFrontier")) {
+    customStop("'frontier.object' must be a matchFrontier object, the output of a call to makeFrontier().")
+  }
   if (missing(N) && missing(Ndrop)) {
-    customStop("one of 'N' or 'Ndrop' must be specified.", "generateDataset()")
+    customStop("one of 'N' or 'Ndrop' must be specified.")
   }
   else if (!missing(N) && !missing(Ndrop)) {
-    customStop("only one of 'N' or 'Ndrop' may be specified.", "generateDataset()")
+    customStop("only one of 'N' or 'Ndrop' may be specified.")
   }
   else if (!missing(Ndrop)) {
     if (!is.numeric(Ndrop) || length(Ndrop) != 1 ||
         Ndrop < 0 || Ndrop > frontier.object$n - 1) {
-      customStop(paste0("'Ndrop' must be a single number between 0 and ", frontier.object$n - 1, "."),
-                 "generateDataset()")
+      customStop(paste0("'Ndrop' must be a single number between 0 and ", frontier.object$n - 1, "."))
     }
     N <- frontier.object$n - Ndrop
   }
   else if (!missing(N)) {
     if (!is.numeric(N) || length(N) != 1 ||
         N < 1 || N > frontier.object$n) {
-      customStop(paste0("'N' must be a single number between 1 and ", frontier.object$n, "."),
-                 "generateDataset()")
+      customStop(paste0("'N' must be a single number between 1 and ", frontier.object$n, "."))
     }
   }
 
