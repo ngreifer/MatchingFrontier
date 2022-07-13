@@ -61,7 +61,9 @@ generateDataset <- function(frontier.object, N, Ndrop, weights = "weights",
 
   d <- makeMatchedData(d, matched.to = matched.to,
                        drop.inds = drop.inds, weights = weights,
-                       dup = dup, subclass = subclass, id = id)
+                       dup = dup,
+                       with_replacement = anyDuplicated(na.omit(matched.to)) != 0,
+                       subclass = subclass, id = id)
 
   if (!is.null(matched.to) && dup) {
     new.cols <- c(attr(d, "id"), attr(d, "subclass"), attr(d, "weights"))
