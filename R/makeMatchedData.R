@@ -1,5 +1,5 @@
 makeMatchedData <- function(dataset, matched.to = NULL, drop.inds = NULL, weights = ".weights",
-                            dup = FALSE, subclass = ".subclass", id = ".id") {
+                            dup = FALSE, with_replacement = TRUE, subclass = ".subclass", id = ".id") {
   if (is.null(matched.to)) {
     if (length(drop.inds) > 0) dataset <- dataset[-drop.inds,,drop=FALSE]
 
@@ -27,6 +27,7 @@ makeMatchedData <- function(dataset, matched.to = NULL, drop.inds = NULL, weight
     attr(dataset, "id") <- id
   }
   else {
+
     if (length(drop.inds) > 0) {
       is.na(matched.to)[drop.inds] <- TRUE
     }
@@ -34,9 +35,22 @@ makeMatchedData <- function(dataset, matched.to = NULL, drop.inds = NULL, weight
     w <- as.numeric(!is.na(matched.to)) + tabulate(matched.to, nbins = length(matched.to))
 
     dataset[[weights]] <- w
+
+    if (!with_replacement) {
+      matched <- which(!is.na(matched.to))
+
+      s <- factor(matched)
+      levels(s) <- seq_len(nlevels(s))
+
+      dataset[[subclass]] <- factor(NA, levels = levels(s))
+
+      dataset[[subclass]][matched] <- s
+      dataset[[subclass]][matched.to[matched]] <- s
+    }
     dataset <- dataset[w > 0,]
 
     attr(dataset, "weights") <- weights
+    if (!with_replacement) attr(dataset, "subclass") <- subclass
   }
   return(dataset)
 }
