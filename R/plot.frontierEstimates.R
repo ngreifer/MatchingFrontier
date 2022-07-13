@@ -70,13 +70,13 @@ plot.frontierEstimates <- function(x,
 
     }
 
-    breaks <- scales::breaks_extended()(x$Xs)
-    upper.breaks <- x$n - breaks
+    upper_breaks <- function(y, ...) {
+      x$n - scales::breaks_extended()(x$n - y, ...)
+    }
 
     p <- p + geom_line(aes(y = x$coefs), ...) +
         scale_x_continuous(sec.axis = dup_axis(trans = ~ x$n - ., name = sub("dropped", "remaining", xlab),
-                                               breaks = upper.breaks),
-                           breaks = breaks) +
+                                               breaks = upper_breaks)) +
         geom_point(aes(x = 0, y = x$un$coef), color = "black") +
         labs(title = "Effects plot", subtitle = sub, x = xlab, y = ylab) +
         theme_bw() +
