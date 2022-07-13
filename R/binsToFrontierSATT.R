@@ -1,7 +1,7 @@
-binsToFrontierSATT <- function(strataholder, treat.vec, metric = "l1", verbose){
+binsToFrontierSATT <- function(strata, treat.vec, metric = "l1", verbose, keep.n.equal = FALSE){
 
-  N1 <- sum(treat.vec[unlist(strataholder)] == 1)
-  N0 <- sum(treat.vec[unlist(strataholder)] == 0)
+  N1 <- sum(treat.vec == 1)
+  N0 <- N0_ <- sum(treat.vec == 0)
   N <- length(treat.vec)
 
   drop.order <- vector("list", N0)
@@ -15,15 +15,14 @@ binsToFrontierSATT <- function(strataholder, treat.vec, metric = "l1", verbose){
   }
 
   if (verbose) {
-    pb <- txtProgressBar(min = 1, max = N0, style = 3)
+    pb <- txtProgressBar(min = 0, max = N0, style = 3)
   }
 
+  strataholder <- lapply(unique(strata), function(s) which(strata == s))
   diffs <- get.diffs(strataholder, treat.vec, N1, N0)
   Ys[1] <- Lstat(diffs)
 
   min.Lstat <- Ys[1]
-
-  if (verbose) setTxtProgressBar(pb, 1)
 
   k <- 1
   repeat {
@@ -39,31 +38,30 @@ binsToFrontierSATT <- function(strataholder, treat.vec, metric = "l1", verbose){
 
     if (N0 == 0) break
 
+    if (verbose) {
+      setTxtProgressBar(pb, N0_ - N0)
+    }
+
     diffs <- get.diffs(strataholder, treat.vec, N1, N0)
     new.Lstat <- Lstat(diffs)
-
 
     if (new.Lstat < min.Lstat) min.Lstat <- new.Lstat
     else if (N0 < .9*(N-N1) && new.Lstat-min.Lstat > .2*(Ys[1]-min.Lstat)) break
 
     Ys[k] <- new.Lstat
     drop.order[[k]] <- drop
-
-    if (verbose) {
-      setTxtProgressBar(pb, k)
-    }
   }
 
-  empty <- which(lengths(drop.order) == 0)
-  drop.order[empty] <- NULL
-  Ys <- Ys[-empty]
+  keep <- c(1L, which(lengths(drop.order) > 0))
+  drop.order[-keep] <- NULL
+  Ys <- Ys[keep]
 
   Xs <- cumsum(lengths(drop.order))
 
   if (verbose) {
-    setTxtProgressBar(pb, N0)
+    setTxtProgressBar(pb, N0_)
     close(pb)
   }
 
-  return(list(drop.order = drop.order, Xs = Xs, Ys = Ys))
+  return(list(drop.order = drop.order, Xs = Xs, Ys = Ys, Y.origin = Ys[1]))
 }
