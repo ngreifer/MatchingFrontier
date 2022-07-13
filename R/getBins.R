@@ -11,7 +11,10 @@ getBins <- function(dataset, match.on, breaks = NULL){
   if (is.null(breaks)) breaks <- "sturges"
 
   if (!is.list(breaks)) {
-    breaks <- setNames(as.list(rep(breaks, length(match.on))), match.on)
+    if (length(breaks) == 1 && (is.null(names(breaks)) || !any(match.on == names(breaks)))) {
+      breaks <- setNames(rep(breaks, length(match.on)), match.on)
+    }
+    breaks <- as.list(breaks)
   }
 
   if (is.null(names(breaks))) customStop("'breaks' must be a named list of binning values with an element for each numeric variable.", "makeFrontier()")
@@ -32,8 +35,8 @@ getBins <- function(dataset, match.on, breaks = NULL){
         bad.breaks[i] <- is.na(pmatch(breaks[[i]], c("sturges", "fd", "scott")))
       }
       else if (is.numeric(breaks[[i]])) {
-        if      (!is.finite(breaks[[i]]) || breaks[[i]] < 0) bad.breaks[i] <- TRUE
-        if      (breaks[[i]] %in% 0:1) match.on <- setdiff(match.on, i) #Will not be binned
+        if (!is.finite(breaks[[i]]) || breaks[[i]] < 0) bad.breaks[i] <- TRUE
+        if (breaks[[i]] %in% 0:1) match.on <- setdiff(match.on, i) #Will not be binned
       }
     }
     else {
@@ -83,9 +86,7 @@ assignToBins <- function(dataset, match.on, bins.list, subset) {
 
   strata <- do.call("paste", c(dataset, list(sep = "|")))
 
-  strataholder <- lapply(unique(strata), function(u) subset[strata==u])
-
-  return(strataholder)
+  return(strata)
 }
 
 get.diffs <- function(strataholder, treat.vec, num.treated, num.control){
