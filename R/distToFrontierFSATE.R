@@ -7,7 +7,7 @@ distToFrontierFSATE <- function(distance.mat, treat.vec, verbose){
   control.ind <- which(treat.vec == 0)
 
   if (verbose) {
-    pb <- txtProgressBar(min = 1, max = N, style = 3)
+    pb <- txtProgressBar(min = 0, max = N, style = 3)
   }
 
   #Find closest matches to treated units (rows) and control units (cols)
@@ -58,6 +58,6 @@ distToFrontierFSATE <- function(distance.mat, treat.vec, verbose){
   if(any(diff(Ys) > 0 )){
     stop('Something is very wrong. Email ngreifer@iq.harvard.edu.')
   }
-  return(list(drop.order = drop.order, Xs = Xs, Ys = Ys, matched.to = matched.to, distance.mat = distance.mat))
+  return(list(drop.order = drop.order, Xs = Xs, Ys = Ys, matched.to = matched.to))
 }
 
