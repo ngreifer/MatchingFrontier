@@ -8,16 +8,19 @@ estOneEffect <- function(formula, dataset, treatment, weights = NULL, subclass =
 
   fit <- do.call("lm", list(formula, data = dataset, weights = weights), quote = TRUE)
 
-  if (is.null(subclass) && is.null(id)) {
-    if (!is.null(alpha)) ci <- safe_ci(fit, treatment, vcov. = sandwich::vcovHC, type = "HC3",
-                                       alpha = alpha)
-  }
-  else {
-    if (!is.null(alpha)) ci <- safe_ci(fit, treatment, vcov. = sandwich::vcovCL, type = "HC1",
-                                   cluster = list(subclass, id), alpha = alpha)
-  }
-
   if (!is.null(alpha)) {
+    if (is.null(subclass) && is.null(id)) {
+      ci <- safe_ci(fit, treatment, vcov. = sandwich::vcovHC, type = "HC3",
+                    alpha = alpha)
+    }
+    else if (!is.null(subclass)) {
+      ci <- safe_ci(fit, treatment, vcov. = sandwich::vcovCL, type = "HC1",
+                    cluster = list(subclass), alpha = alpha)
+    }
+    else {
+      ci <- safe_ci(fit, treatment, vcov. = sandwich::vcovCL, type = "HC1",
+                    cluster = list(subclass, id), alpha = alpha)
+    }
     if (treatment %in% rownames(ci)) {
       out <- c(coef(fit)[treatment], ci[treatment, ])
     }

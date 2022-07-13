@@ -20,7 +20,8 @@ estimateEffects <- function(frontier.object,
   }
 
   # These are the points that we'll estimate
-  n.steps <- length(frontier.object$frontier$Xs)
+  # n.steps <- length(frontier.object$frontier$Xs)
+  n.steps <- rev(which(frontier.object$n - frontier.object$frontier$Xs >= 20))[1]
   if ("prop.estimated" %in% ...names()) {
     prop.estimated <- list(...)$prop.estimated
     if (length(prop.estimated) != 1 || !is.numeric(prop.estimated)) {
@@ -119,7 +120,7 @@ estimateEffects <- function(frontier.object,
 
   if (verbose) {
     cat("Estimating effects...\n")
-    pb <- txtProgressBar(min = 1, max = length(point.inds) + 1, style = 3)
+    pb <- txtProgressBar(min = 0, max = length(point.inds) + 1, style = 3)
   }
 
   #Estimate effect, mod dep, and CI in unadjusted data
@@ -144,12 +145,15 @@ estimateEffects <- function(frontier.object,
 
   if (verbose) setTxtProgressBar(pb, 1)
 
+  with_replacement <- anyDuplicated(na.omit(frontier.object$matched.to)) != 0
+
   for (i in seq_along(point.inds)) {
     this.dat.inds.to.drop <- unlist(frontier.object$frontier$drop.order[seq_len(point.inds[i])])
 
     matched.dataset <- makeMatchedData(frontier.object$dataset,
                                        matched.to = frontier.object$matched.to,
-                                       drop.inds = this.dat.inds.to.drop)
+                                       drop.inds = this.dat.inds.to.drop,
+                                       with_replacement = with_replacement)
 
     if (method != "none") {
       suppressWarnings({
@@ -168,6 +172,7 @@ estimateEffects <- function(frontier.object,
 
     results <- estOneEffect(base.form, matched.dataset, treatment,
                             weights = matched.dataset[[attr(matched.dataset, "weights")]],
+                            subclass = matched.dataset[[attr(matched.dataset, "subclass")]],
                             alpha = alpha)
 
     coefs[i] <- results[1]
