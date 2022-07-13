@@ -85,12 +85,17 @@ summary.matchFrontier <- function(object, N, Ndrop, ...) {
     ord <- order(N, decreasing = TRUE)
     N <- N[ord]
 
+    Ns <- object$n - object$frontier$Xs
+
+    for (i in seq_along(N)) {
+      N[i] <- Ns[which.min(Ns[Ns >= N[i]])]
+    }
+    N <- unique(N)
+
     selectedNtreated <- numeric(length(N))
     selectedNcontrol <- numeric(length(N))
     selectedN <- numeric(length(N))
     selectedStat <- numeric(length(N))
-
-    Ns <- object$n - object$frontier$Xs
 
     treated.ind <- which(object$dataset[[object$treatment]] == 1)
     control.ind <- which(object$dataset[[object$treatment]] == 0)
@@ -102,9 +107,7 @@ summary.matchFrontier <- function(object, N, Ndrop, ...) {
     }
 
     for (i in seq_along(N)) {
-      ind <- which.min(Ns[Ns >= N[i]])
-      N[i] <- Ns[ind]
-
+      ind <- which(Ns == N[i])
       selectedStat[i] <- object$frontier$Ys[ind]
 
       if (object$QOI %in% c("SATE", "FSATE")) {
