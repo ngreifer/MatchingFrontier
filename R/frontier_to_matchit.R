@@ -1,3 +1,4 @@
+#Edit for new metrics!
 frontier_to_matchit <- function(frontier.object, N, Ndrop) {
 
   if (!inherits(frontier.object, "matchFrontier")) {
@@ -52,30 +53,19 @@ frontier_to_matchit <- function(frontier.object, N, Ndrop) {
     weights[drop.inds] <- 0
   }
 
-  #Compute sample sizes
-  ESS <- function(w) sum(w)^2/sum(w^2)
-  nn <- matrix(c(sum(treat==0), sum(treat==1),
-                sum(treat==0), sum(treat==1),
-                ESS(weights[treat==0]), ESS(weights[treat==1]),
-                sum(treat==0 & weights > 0), sum(treat==1 & weights > 0),
-                sum(treat==0 & weights==0), sum(treat==1 & weights==0),
-                0, 0), byrow = TRUE, ncol=2, nrow=6,
-              dimnames = list(c("All (ESS)", "All", "Matched (ESS)","Matched", "Unmatched","Discarded"),
-                              c("Control", "Treated")))
-
   method <- "matchingFrontier"
   attr(method, "method") <- paste0("matching frontier (minimizing the ", metric2info(frontier.object$metric), ")")
   info <- list(method = method,
                replace = if (inherits(frontier.object, "distFrontier")) TRUE else NULL,
                mahalanobis = FALSE,
                distance_is_matrix = frontier.object$metric == "custom")
-  if (inherits(frontier.object, "distFrontier")) {
-    info$distance <- "user"
-    attr(info$distance, "custom") <- switch(frontier.object$metric,
-                                            "mahal" = "Mahalanobis",
-                                            "euclid" = "Euclidean",
-                                            NULL)
-  }
+  # if (inherits(frontier.object, "distFrontier")) {
+  #   info$distance <- "user"
+  #   attr(info$distance, "custom") <- switch(frontier.object$metric,
+  #                                           "mahal" = "Mahalanobis",
+  #                                           "euclid" = "Euclidean",
+  #                                           NULL)
+  # }
 
   out <- list(
     match.matrix = match.matrix,
@@ -86,7 +76,7 @@ frontier_to_matchit <- function(frontier.object, N, Ndrop) {
     estimand = estimand,
     formula = reformulate(frontier.object$match.on, frontier.object$treatment),
     treat = treat,
-    nn = nn)
+    discarded = rep(FALSE, length(treat)))
 
   class(out) <- "matchit"
   return(out)
