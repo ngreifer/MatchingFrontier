@@ -26,8 +26,10 @@ checkDat <- function(dataset, treatment, match.on){
     }
 
     # Check for missing values
-    if (anyNA(dataset[c(treatment, match.on)])){
+    for (i in c(treatment, match.on)) {
+      if (anyNA(dataset[[i]])) {
         customStop("missing values are not allowed in the treatment or matching variables.", 'makeFrontier()')
+      }
     }
 
     # Check treatment
