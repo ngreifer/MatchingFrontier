@@ -2,7 +2,7 @@ EnergyFrontier <- function(treatment, dataset, formula, metric, QOI, keep.n.equa
 
   treat <- dataset[[treatment]]
 
-  if (is.null(attr(metric, "distance.mat"))) distance.mat <- "scaled"
+  if (is.null(attr(metric, "distance.mat"))) distance.mat <- "scaled_euclidean"
   else distance.mat <- attr(metric, "distance.mat")
 
   if (is.character(distance.mat) && length(distance.mat) == 1L) {
@@ -10,7 +10,7 @@ EnergyFrontier <- function(treatment, dataset, formula, metric, QOI, keep.n.equa
 
     new.formula <- update(formula, NULL ~ .)
 
-    distance.mat <- match_arg(distance.mat, c("mahalanobis", "scaled_euclidean", "euclidean"))
+    distance.mat <- match_arg(distance.mat, c("mahalanobis", "robust_mahalanobis", "scaled_euclidean", "euclidean"))
 
     distance.mat <- {
       if (distance.mat == "mahalanobis") {
@@ -19,24 +19,14 @@ EnergyFrontier <- function(treatment, dataset, formula, metric, QOI, keep.n.equa
       else if (distance.mat == "scaled_euclidean") {
         MatchIt::scaled_euclidean_dist(new.formula, dataset)
       }
-      else { #if (distance.mat == "euclidean")
+      else if (distance.mat == "euclidean") {
         MatchIt::euclidean_dist(new.formula, dataset)
+      }
+      else if (distance.mat == "robust_mahalanobis") {
+        MatchIt::robust_mahalanobis_dist(new.formula, dataset)
       }
     }
 
-    # covs.mat <- get.covs.matrix(formula, dataset)
-    #
-    # distance.mat <- {
-    #   if (distance.mat == "mahalanobis") {
-    #     calculateMdist(covs.mat)
-    #   }
-    #   else if (distance.mat == "scaled") {
-    #     calculateEdist(scale(covs.mat))
-    #   }
-    #   else { #if (distance.mat == "euclidean")
-    #     calculateEdist(covs.mat)
-    #   }
-    # }
   }
   else {
     if (inherits(distance.mat, "dist")) distance.mat <- as.matrix(distance.mat)

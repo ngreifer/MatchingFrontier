@@ -8,19 +8,20 @@ DistFrontier <- function(treatment, dataset, formula, metric, QOI, verbose){
   if (is.character(distance.mat) && length(distance.mat) == 1L && distance.mat != "custom") {
     if (verbose) cat("Computing distance matrix...\n")
 
-    distance.mat <- match_arg(distance.mat, c("mahalanobis", "scaled", "euclidean"))
-
-    covs.mat <- get.covs.matrix(formula, dataset)
+    distance.mat <- match_arg(distance.mat, c("mahalanobis", "robust_mahalanobis", "scaled_euclidean", "euclidean"))
 
     distance.mat <- {
       if (distance.mat == "mahalanobis") {
-        calculateMdist(covs.mat, treat)
+        MatchIt::mahalanobis_dist(formula, dataset)
       }
-      else if (distance.mat == "scaled") {
-        calculateEdist(scale(covs.mat), treat)
+      else if (distance.mat == "scaled_euclidean") {
+        MatchIt::scaled_euclidean_dist(formula, dataset)
       }
-      else { #if (distance.mat == "euclidean")
-        calculateEdist(covs.mat, treat)
+      else if (distance.mat == "euclidean") {
+        MatchIt::euclidean_dist(formula, dataset)
+      }
+      else if (distance.mat == "robust_mahalanobis") {
+        MatchIt::robust_mahalanobis_dist(formula, dataset)
       }
     }
   }
