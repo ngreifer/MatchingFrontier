@@ -26,7 +26,7 @@ makeFrontier.data.frame <- function(x, treatment, match.on, QOI = 'FSATT',
   formula <- reformulate(match.on, treatment)
 
   makeFrontier_internal(x, treatment, match.on, formula, QOI,
-                        processed_metric, call, verbose)
+                        processed_metric, call, keep.n.equal, verbose)
 }
 
 makeFrontier.formula <- function(formula, data, QOI = 'FSATT',
