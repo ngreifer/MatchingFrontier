@@ -24,54 +24,54 @@ binsToFrontierFSATE <- function(strata, treat.vec, metric = "l1", verbose, keep.
     sum(treat.vec[x] == 1)
   }, numeric(1L))
 
-  control.counts <- vapply(strataholder, function(x) {
-    sum(treat.vec[x] == 0)
-  }, numeric(1L))
+  control.counts <- lengths(strataholder) - treated.counts
 
   treated.props <- treated.counts/N1
   control.props <- control.counts/N0
 
   diffs <- treated.props - control.props
-  # diffs <- get.diffs(strataholder, treat.vec, N1, N0)
   Ys[1] <- Lstat(diffs)
 
   min.Lstat <- Ys[1]
 
   k <- 1
+
   repeat {
     k <- k + 1
 
+    L.best.treated.to.drop <- L.best.control.to.drop <- Inf
+
     if (!keep.n.equal || N1 > N0) {
-      altered.treat.props <- treated.counts/(N1 - 1)
-      L.drop.treated <- vapply(seq_along(strataholder), function(i) {
-        atp <- altered.treat.props
-        atp[i] <- (treated.counts[i] - 1)/(N1-1)
-        diffs <- atp - control.props
-        Lstat(diffs)
-      }, numeric(1L))
-      best.L.treated <- min(L.drop.treated)
-      if (keep.n.equal) best.L.control <- Inf
+      altered.treated.props <- treated.counts/(N1 - 1)
+
+      altered.treated.diffs <- altered.treated.props - control.props
+
+      best.treated.to.drop <- which.max(altered.treated.diffs)
+
+      altered.treated.diffs[best.treated.to.drop] <- altered.treated.diffs[best.treated.to.drop] - 1/(N1 - 1)
+
+      L.best.treated.to.drop <- Lstat(altered.treated.diffs)
     }
 
     if (!keep.n.equal || N1 <= N0) {
       altered.control.props <- control.counts/(N0 - 1)
-      L.drop.control <- vapply(seq_along(strataholder), function(i) {
-        acp <- altered.control.props
-        acp[i] <- (control.counts[i] - 1)/(N0-1)
-        diffs <- acp - treated.props
-        Lstat(diffs)
-      }, numeric(1L))
-      if (keep.n.equal) best.L.treated <- Inf
-      best.L.control <- min(L.drop.control)
+
+      altered.control.diffs <- altered.control.props - treated.props
+
+      best.control.to.drop <- which.max(altered.control.diffs)
+
+      altered.control.diffs[best.control.to.drop] <- altered.control.diffs[best.control.to.drop] - 1/(N0 - 1)
+
+      L.best.control.to.drop <- Lstat(altered.control.diffs)
     }
 
-    if (best.L.treated < best.L.control) {
+    if (L.best.treated.to.drop < L.best.control.to.drop) {
       drop.group <- 1
-      drop.from <- which(L.drop.treated == best.L.treated)[1]
+      drop.from <- best.treated.to.drop
     }
     else {
       drop.group <- 0
-      drop.from <- which(L.drop.control == best.L.control)[1]
+      drop.from <- best.control.to.drop
     }
 
     dropped.element.ind <- which(treat.vec[strataholder[[drop.from]]] == drop.group)[1]
@@ -83,13 +83,13 @@ binsToFrontierFSATE <- function(strata, treat.vec, metric = "l1", verbose, keep.
       N1 <- N1 - 1
       treated.counts[drop.from] <- treated.counts[drop.from] - 1
       treated.props <- treated.counts/N1
-      new.Lstat <- best.L.treated
+      new.Lstat <- L.best.treated.to.drop
     }
     else {
       N0 <- N0 - 1
       control.counts[drop.from] <- control.counts[drop.from] - 1
       control.props <- control.counts/N0
-      new.Lstat <- best.L.control
+      new.Lstat <- L.best.control.to.drop
     }
 
     if (N1 == 0 || N0 == 0) break
@@ -98,15 +98,13 @@ binsToFrontierFSATE <- function(strata, treat.vec, metric = "l1", verbose, keep.
       setTxtProgressBar(pb, N - (N0 + N1))
     }
 
-    # if (new.Lstat > Ys[k - 1]) break
-
     if (new.Lstat < min.Lstat) min.Lstat <- new.Lstat
-    else if ((N1+N0) < .9*N && new.Lstat - min.Lstat > .2*(Ys[1] - min.Lstat)) break
+    # else if ((N1+N0) < .9*N && new.Lstat - min.Lstat > .2*(Ys[1] - min.Lstat)) break
 
     Ys[k] <- new.Lstat
     drop.order[[k]] <- drop
 
-    if (new.Lstat == 0) break
+    if (new.Lstat < 1e-9) break
   }
 
   keep <- c(1L, which(lengths(drop.order) > 0))
