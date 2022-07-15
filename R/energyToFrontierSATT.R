@@ -29,15 +29,16 @@ energyToFrontierSATT <- function(distance.mat, treat.vec, verbose, keep.n.equal 
   }
 
   d10 <- distance.mat[treated.ind, control.ind, drop = FALSE]
-  cSd10 <- colSums(d10)
+  cSd10 <- col_sums(d10)
   Sd10 <- sum(cSd10)
 
   d11 <- distance.mat[treated.ind, treated.ind, drop = FALSE]
   Sd11 <- sum(d11)
 
   d00 <- distance.mat[control.ind, control.ind, drop = FALSE]
-  cSd00 <- colSums(d00)
+  cSd00 <- col_sums(d00)
   Sd00 <- sum(cSd00)
+  d00i <- seq_len(ncol(d00))
 
   Ys[1] <- 2*Sd10/(N1*N0) - Sd11/(N1*N1) - Sd00/(N0*N0)
 
@@ -69,14 +70,16 @@ energyToFrontierSATT <- function(distance.mat, treat.vec, verbose, keep.n.equal 
     }
 
     #Compute new edist with dropped units removed
-    Sd10 <- Sd10 - sum(d10[,drop.control])
-    cSd10 <- cSd10[-drop.control]
-    d10 <- d10[,-drop.control, drop = FALSE]
+    d00i_drop.control <- d00i[drop.control]
+    d00i_idrop.control <- d00i[-drop.control]
 
-    Sd00 <- Sd00 - 2*sum(d00[-drop.control, drop.control]) -
-      sum(d00[drop.control, drop.control])
-    cSd00 <- cSd00[-drop.control] - colSums(d00[drop.control, -drop.control, drop = FALSE])
-    d00 <- d00[-drop.control, -drop.control, drop = FALSE]
+    Sd10 <- Sd10 - sum(d10[,d00i_drop.control])
+    cSd10 <- cSd10[-drop.control]
+
+    Sd00 <- Sd00 - 2*sum(d00[d00i_idrop.control, d00i_drop.control]) -
+      sum(d00[d00i_drop.control, d00i_drop.control])
+    cSd00 <- cSd00[-drop.control] - col_sums(d00[d00i_drop.control, d00i_idrop.control, drop = FALSE])
+    d00i <- d00i_idrop.control
 
     edist <- 2*Sd10/(N1*N0) - Sd11/(N1*N1) - Sd00/(N0*N0)
 

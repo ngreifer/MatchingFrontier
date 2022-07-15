@@ -29,25 +29,27 @@ energyToFrontierSATE <- function(distance.mat, treat.vec, verbose, keep.n.equal 
   Sdff <- sum(distance.mat)
 
   df1 <- distance.mat[,treated.ind, drop = FALSE]
-  cSdf1 <- colSums(df1)
+  cSdf1 <- col_sums(df1)
   Sdf1 <- sum(cSdf1)
 
   df0 <- distance.mat[,control.ind, drop = FALSE]
-  cSdf0 <- colSums(df0)
+  cSdf0 <- col_sums(df0)
   Sdf0 <- Sdff - Sdf1
 
   d10 <- df0[treated.ind,, drop = FALSE]
-  rSd10 <- rowSums(d10)
-  cSd10 <- colSums(d10)
+  rSd10 <- row_sums(d10)
+  cSd10 <- col_sums(d10)
   Sd10 <- sum(rSd10)
 
   d11 <- df1[treated.ind,,drop = FALSE]
-  cSd11 <- colSums(d11)
+  cSd11 <- col_sums(d11)
   Sd11 <- sum(cSd11)
+  d11i <- seq_len(ncol(d11))
 
   d00 <- df0[control.ind,, drop = FALSE]
-  cSd00 <- colSums(d00)
+  cSd00 <- col_sums(d00)
   Sd00 <- sum(cSd00)
+  d00i <- seq_len(ncol(d00))
 
   Ys[1] <- 2*Sd10/(N1*N0) - Sd11/(N1*N1) - Sd00/(N0*N0) +
     2*Sdf1/(N1*N) - Sd11/(N1*N1) - Sdff/(N*N) +
@@ -117,37 +119,44 @@ energyToFrontierSATE <- function(distance.mat, treat.vec, verbose, keep.n.equal 
 
     #Compute new edist with dropped units removed by subtracting contributions
     #of discarded units from remaining sum
-    Sd10 <- Sd10 - sum(d10[drop.treated,]) -
-      sum(d10[,drop.control]) -
-      sum(d10[drop.treated,drop.control])
-
     if (length(drop.treated) > 0) {
-      rSd10 <- rSd10[-drop.treated]
-      cSd10 <- cSd10 - colSums(d10[drop.treated,, drop = FALSE])
-      d10 <- d10[-drop.treated,, drop = FALSE]
-
-      Sdf1 <- Sdf1 - sum(df1[,drop.treated])
-      cSdf1 <- cSdf1[-drop.treated]
-      df1 <- df1[, -drop.treated, drop = FALSE]
-
-      Sd11 <- Sd11 - 2*sum(d11[-drop.treated, drop.treated]) -
-        sum(d11[drop.treated, drop.treated])
-      cSd11 <- cSd11[-drop.treated] - colSums(d11[drop.treated, -drop.treated, drop = FALSE])
-      d11 <- d11[-drop.treated, -drop.treated, drop = FALSE]
+      d11i_drop.treated <- d11i[drop.treated]
+      d11i_idrop.treated <- d11i[-drop.treated]
     }
     if (length(drop.control) > 0) {
-      rSd10 <- rSd10 - rowSums(d10[,drop.control, drop = FALSE])
+      d00i_drop.control <- d00i[drop.control]
+      d00i_idrop.control <- d00i[-drop.control]
+    }
+
+    if (length(drop.treated) > 0 && length(drop.control) > 0) {
+      Sd10 <- Sd10 - sum(d10[d11i_drop.treated, d00i_drop.control])
+    }
+
+    if (length(drop.treated) > 0) {
+      Sd10 <- Sd10 - sum(d10[d11i_drop.treated, d00i])
+      rSd10 <- rSd10[-drop.treated]
+      cSd10 <- cSd10 - col_sums(d10[d11i_drop.treated, d00i, drop = FALSE])
+
+      Sdf1 <- Sdf1 - sum(df1[,d11i_drop.treated])
+      cSdf1 <- cSdf1[-drop.treated]
+
+      Sd11 <- Sd11 - 2*sum(d11[d11i_idrop.treated, d11i_drop.treated]) -
+        sum(d11[d11i_drop.treated, d11i_drop.treated])
+      cSd11 <- cSd11[-drop.treated] - col_sums(d11[d11i_drop.treated, d11i_idrop.treated, drop = FALSE])
+      d11i <- d11i_idrop.treated
+    }
+    if (length(drop.control) > 0) {
+      Sd10 <- Sd10 - sum(d10[d11i, d00i_drop.control])
+      rSd10 <- rSd10 - row_sums(d10[d11i, d00i_drop.control, drop = FALSE])
       cSd10 <- cSd10[-drop.control]
-      d10 <- d10[,-drop.control, drop = FALSE]
 
-      Sdf0 <- Sdf0 - sum(df0[,drop.control])
+      Sdf0 <- Sdf0 - sum(df0[,d00i_drop.control])
       cSdf0 <- cSdf0[-drop.control]
-      df0 <- df0[, -drop.control, drop = FALSE]
 
-      Sd00 <- Sd00 - 2*sum(d00[-drop.control, drop.control]) -
-        sum(d00[drop.control, drop.control])
-      cSd00 <- cSd00[-drop.control] - colSums(d00[drop.control, -drop.control, drop = FALSE])
-      d00 <- d00[-drop.control, -drop.control, drop = FALSE]
+      Sd00 <- Sd00 - 2*sum(d00[d00i_idrop.control, d00i_drop.control]) -
+        sum(d00[d00i_drop.control, d00i_drop.control])
+      cSd00 <- cSd00[-drop.control] - col_sums(d00[d00i_drop.control, d00i_idrop.control, drop = FALSE])
+      d00i <- d00i_idrop.control
     }
 
     edist <- 2*Sd10/(N1*N0) - Sd11/(N1*N1) - Sd00/(N0*N0) +

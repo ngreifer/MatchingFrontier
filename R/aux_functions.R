@@ -225,6 +225,14 @@ w_m <- function(x, w = NULL) {
   else sum(x*w)/sum(w)
 }
 
+#Column sums and row sums, faster than colSums() and rowSums()
+col_sums <- function(x) {
+  .colSums(x, nrow(x), ncol(x))
+}
+row_sums <- function(x) {
+  .rowSums(x, nrow(x), ncol(x))
+}
+
 #Weighted KS statistic, from cobalt's col_w_ks()
 w_ks <- function(x, treat, w = NULL) {
   if (is.null(w)) w <- rep(1, length(treat))
