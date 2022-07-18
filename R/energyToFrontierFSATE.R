@@ -133,7 +133,7 @@ energyToFrontierFSATE <- function(distance.mat, treat.vec, verbose, keep.n.equal
     #After passing sample size threhsold of 90% of original N, stop if
     #new edist is larger than smallest edist
     if (edist < min.edist) min.edist <- edist
-    else if ((N1+N0)/N < .9 && edist-min.edist > .2*(Ys[1]-min.edist)) break
+    # else if ((N1+N0)/N > .9 && edist-min.edist > .2*(Ys[1]-min.edist)) break
 
     #Record new edist and units dropped
     Ys[k] <- edist
