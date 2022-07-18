@@ -7,6 +7,26 @@ output:
   `MatchingFrontier` News and Updates
 ======
 
+# MatchingFrontier 4.1.0
+
+See the version 4.0.0 updates below in addition to the ones here for a full description of the updates to `MatchingFrontier` since it was removed from CRAN.
+
+* Frontiers can now be created for `matchit` objects after 1:1 propensity score matching using `MatchIt::matchit()`. This drops one pair of units at a time and considers how the chosen imbalance metric changes as the additional units are dropped, in particular to examine the propensity score paradox described by King and Nielsen (2019). The frontier can be viewed either as the number of pairs dropped/retained or the size of the caliper that yields the corresponding matched sample. See `help("makeFrontier.matchit")` for details.
+
+* The `metric` argument to `makeFrontier()` has been simplified; the allowable options are now `"dist"` (which replaces `"mahal"`, `"euclid"`, and `"custom"`), `L1` or `L2`, and `"energy"`. Using `metric = "dist"` now involves specifying the name of a distance matrix to the `distance.mat` argument to determine the distances used (see below). To request that bins are created using the "median" algorithm previously requested by setting `metric = "L1median"` or `"L2median"`, the `breaks` argument can be set to `"median"`.
+
+* Different distance matrices can be used with `metric = "dist"` and `metric = "energy"` by supplying an argument to `distance.mat` naming the distance matrix to be used. Allowable options include `"mahalanobis"` for the Mahalanobis distance (the default with `metric = "dist"`), `"scaled_euclidean"` for the Euclidean distance computed using the standardized covariates (the default with `metric = "energy"`), and `"euclidean"` for the Euclidean distance computed using the raw covariates. These are computed using the corresponding functions in `MatchIt`, which speeds up computations.
+
+* Added the `keep.n.equal` argument to `makeFrontier()` for bin- and energy-based frontiers. When the QOI is the FSATE or SATE, setting this argument to `TRUE` ensures that only units from the larger of the two treatment groups are dropped until the groups are the same size, at which point they are kept the same size as additional units are dropped. This ensures one group does not get too small. For energy-based frontiers, this can sometimes lead to a frontier with better optimal balance. The argument is ignored for the SATT and distance-based frontiers.
+
+* Fixed a bug where zooming in on a frontier plot using `coord_cartesian()` would cause the axis labels to vanish.
+
+* Improved the balancing performance of bin-based frontiers for the FSATE. Computing the frontier may take a bit longer, but the frontier will tend toward exact balance, whereas in the past it would frequently diverge. The current implementation finds the unit that, when dropped, yields the best improvement in the balance measure.
+
+* Slightly improved the performance of computing energy frontiers.
+
+* Fixed a bug where the progress bar did not correspond to the actual progress being made (and so would jump from a moderate number to 100% in a single step).
+
 # MatchingFrontier 4.0.0
 
 `MatchingFrontier` has been completely rewritten from scratch, providing more consistent syntax, new methods for constructing the frontier, and many other new features. All of these are breaking changes, meaning you should not expect result to agree with those from version 3.0.0 or below, and syntax from earlier versions may not work with this version. To install an older version of `MatchingFrontier` (e.g., to reproduce the results of an older analysis), you can install an archived version from CRAN. Here, we describe some of the changes made to the package and its functionality.
@@ -17,7 +37,7 @@ output:
 
 * `QOI` can now be one of `"SATE"` (sample average treatment effect), `"FSATE"` (feasible sample average treatment effect), `"SATT"` (sample average treatment effect in the treated), or `"FSATT"` (feasible sample average treatment effect in the treated).
 
-* The different types of frontiers are now available depending on the imbalance metric supplied to `metric`. These include pair distance-based frontiers, bin-based frontiers, and energy distance-based frontiers. For pair distance-based frontiers, `metric` can be one of `"mahal"`, `"euclid"`, or "`custom"`. For bin-based frontiers, `metric` can be one `"L1"`, `"L2"`, `"L1median"`, or `"L2median"`. For energy distance-based frontiers, `metric` can be `"energy"`. Not all `metric`s are available with all `QOI`s, but the ones available have expanded from previous versions. The argument is now case-insensitive (i.e., so old `metric`s like `"Mahal"` still work).
+* The different types of frontiers are now available depending on the imbalance metric supplied to `metric`. These include pair distance-based frontiers, bin-based frontiers, and energy distance-based frontiers. For pair distance-based frontiers, `metric` can be set to `"dist"`. For bin-based frontiers, `metric` can be one of `"L1"` or `"L2"`. For energy distance-based frontiers, `metric` can be set to `"energy"`. Not all `metric`s are available with all `QOI`s, but the ones available have expanded from previous versions. The argument is now case-insensitive (i.e., so old `metric`s like `"Mahal"` still work).
 
 * Bugs in how the balance statistics are computed have been fixed.
 
