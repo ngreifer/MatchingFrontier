@@ -58,7 +58,7 @@ Below, we describe the different frontiers available and which quantities of int
 
 ### Pair distance-based frontiers
 
-Pair distance-based frontiers involve a first step of pairing observations based on the distances between them (i.e., using 1:1 matching), and the frontier is formed by discarding one pair at a time until none remain, similar to applying a tighter and tighter caliper. The imbalance metric is the average of the pairwise distances of the remaining units. When pair distance-based metrics are equal to zero, the remaining units comprise pairs of units identical on the included covariates. Pairing is done with replacement, so each unit can be used as a pair to multiple other units. The distance between units used to form the pairs and compute the imbalance metric can be computed as the Mahalanobis distance, the Euclidean distance, or a user-supplied distance.
+Pair distance-based frontiers involve a first step of pairing observations based on the distances between them (i.e., using 1:1 matching), and the frontier is formed by discarding one pair at a time until none remain, similar to applying a tighter and tighter caliper. The imbalance metric is the average of the pairwise distances of the remaining units. When pair distance-based metrics are equal to zero, the remaining units comprise pairs of units identical on the included covariates. Pairing is done with replacement, so each unit can be used as a pair to multiple other units. The distance between units used to form the pairs and compute the imbalance metric can be computed as the Mahalanobis distance, the Euclidean distance on the scaled or original covariates, or a user-supplied distance.
 
 These frontiers can only be used when the quantity of interest is the FSATE or FSATT. For the FSATE, each treated unit is paired with a control unit, and each control unit is paired with a treated unit; these processes are independent so a control unit may not be paired with the treated unit it is paired to. Each pair can be thought of as a single-headed arrow pointing from the focal unit to its paired unit; pairs are not bi-directional (except by chance). The effect estimated after the initial match (prior to dropping any units) corresponds to the SATE; once any units are dropped, the estimand corresponds to the FSATE. For the FSATT, each treated unit is paired with a control unit (i.e., arrows emanate from treated units but not from control units), and the frontier is formed by dropping treated units. The effect estimated after the initial match (prior to dropping any units) corresponds to the SATT; once any units are dropped, the estimand corresponds to the FSATT.
 
@@ -80,7 +80,7 @@ $$
 
 where $H$ is a vector of the number of bins for the covariates, $\ell_1 \dots\ell_k$ are the strata formed by applying the bin boundaries to the covariates, and $f_{\ell_1 \dots\ell_k}$ and $g_{\ell_1 \dots\ell_k}$ are the proportion of treated and control units, respectively, in each stratum. The number of bins to use for each covariate can be chosen by the user or computed automatically as the number of bins that yield the median value of the imbalance metric across a random sample of binnings in the full sample, thereby removing the dependence of the frontier on a specific choice by the user [@iacus2011].
 
-These frontiers can be used when the quantity of interest is the FSATE or SATT. For the FSATE, units are dropped one at a time. Units will be dropped from the bins with the largest treatment group imbalance (i.e., so units with no members of the other bin will be dropped first). For the SATT, only control units can be dropped; all treated units will remain, even if no controls units share a bin with them.
+These frontiers can be used when the quantity of interest is the FSATE or SATT. For the FSATE, units are dropped one at a time. Units will be dropped from the bins with the largest treatment group imbalance (i.e., so units with no members of the other bin will be dropped first). For the SATT, only control units can be dropped; all treated units will remain, even if no control units share a bin with them.
 
 ### Energy distance-based frontiers
 
@@ -111,7 +111,7 @@ data("lalonde", package = "MatchIt")
 head(lalonde)
 ```
 
-The statistical quantity of interest is the causal effect of the treatment (`treat`) on 1978 earnings (`re78`). The other variables are pre-treatment covariates. See `help("lalonde", package = "MatchIt")` for more information on this dataset. Though the original focus with this dataset was to estimate the average treatment effect in the treated, which corresponded to the effect estimated in the accompanying randomized trial, here we will consider this and other quantities of interest.
+The statistical quantity of interest is the causal effect of the treatment (`treat`) on 1978 earnings (`re78`). The other variables are pre-treatment covariates. See `help("lalonde", package = "MatchIt")` for more information on this dataset. The original focus with this dataset was to estimate the average treatment effect in the treated (SATT), which corresponded to the effect estimated in the accompanying randomized trial.
 
 The typical workflow for using `Matchingfrontier` is the following. First, the user computes the balance-sample size frontier corresponding to the chosen quantity of interest (i.e., estimand) and imbalance metric; then, the frontier is visualized in a plot. The user can then estimate treatment effects at each point along the frontier or choose a single point on the frontier on which to estimate the effect.
 
@@ -124,10 +124,11 @@ mahal.frontier <- makeFrontier(treat ~ age + educ + race + married +
                                  nodegree + re74 + re75,
                                data = lalonde, 
                                QOI = "FSATT", 
-                               metric = "mahal")
+                               metric = "dist",
+                               verbose = FALSE)
 ```
 
-There are a few ways to specify the arguments to `makeFrontier()`; see `help("makeFrontier")` for details. Here, we used the formula interface, which requires a model formula of the form `A ~ X1 + X2 + ...` where `A` corresponds to the treatment and `X1` and `X2` are the pretreatment covariates. We must also supply a dataset to the `data` argument. Note that no model is being fit here; the model formula serves to indicate which variable is the treatment and which are the covariates. The `QOI` (i.e., quantity of interest) argument corresponds to the desired estimand; here, we select the FSATT, but others are available depending on the type of frontier, as described previously. The `metric` argument corresponds to the imbalance metric used. Here, we entered `"mahal"` to request the average Mahalanobis imbalance be used.
+There are a few ways to specify the arguments to `makeFrontier()`; see `help("makeFrontier")` for details. Here, we used the formula interface, which requires a model formula of the form `A ~ X1 + X2 + ...` where `A` corresponds to the treatment and `X1` and `X2` are the pretreatment covariates. We must also supply a dataset to the `data` argument. Note that no model is being fit here; the model formula serves to indicate which variable is the treatment and which are the covariates. The `QOI` (i.e., quantity of interest) argument corresponds to the desired estimand; here, we select the FSATT, but others are available depending on the type of frontier, as described previously. The `metric` argument corresponds to the imbalance metric used. Here, we entered `"dist"` to request the average pairwise distance between matched units be used; by default the pairwise distance is computed as the Mahalanobis distance.
 
 The frontier is stored in the `matchFrontier` object, which we have called `mahal.frontier`. Printing `mahal.frontier` provides a summary of the type of frontier and its components:
 
@@ -159,7 +160,7 @@ summary(mahal.frontier, Ndrop = seq(40, 120, by = 20))
 ```
 
 
-We can also view information about balance for individual covariates using `plot.matchFrontier()`. To do so, we supply the names of individual covariates to the `covs` argument of `plot.matchFrontier()` and set `stat = "std-diff"` for standardized mean differences, which are useful for continuous covariates, and `stat = "diff`, and for raw mean differences, which are useful for sets of variables that are on the same scale (like binary covariates).
+We can also view information about balance for individual covariates using `plot.matchFrontier()`. To do so, we supply the names of individual covariates to the `covs` argument of `plot.matchFrontier()` and set `stat = "std-diff"` for standardized mean differences, which are useful for continuous covariates, and `stat = "diff"` for raw mean differences, which are useful for sets of variables that are on the same scale (like binary covariates).
 
 ```{r, fig.show='hold'}
 #Standardized mean differences for continuous covariates
@@ -221,7 +222,7 @@ mahal.matched.data <- generateDataset(mahal.frontier, N = 100)
 head(mahal.matched.data)
 ```
 
-The returned dataset contains only the matched units for use in estimating treatment effects. With pair distance-based frontiers, we have the option to set `dup = TRUE`, which creates a dataset with an entry for every for unit for every time that unit is used in a match. Because several control units are matched to multiple treated units, they will appear more than once in the returned dataset. Setting `dup = FALSE` (the default) instead requires that each unit appears no more than once in the returned dataset, with weights present to reflect the reuse of units, but information about pair membership will be lost; this is equivalent to using `MatchIt::match.data()` on the returned `matchit` object. See `help("generateDataset")` for more details.
+The returned dataset contains only the matched units for use in estimating treatment effects. With pair distance-based frontiers, we have the option to set `dup = TRUE`, which creates a dataset with an entry for every for unit for every time that unit is used in a match; this is equivalent to using `MatchIt::get_matches()` on the returned `matchit` object. Because several control units are matched to multiple treated units, they will appear more than once in the returned dataset. Setting `dup = FALSE` (the default) instead requires that each unit appears no more than once in the returned dataset, with weights present to reflect the reuse of units, but information about pair membership will be lost; this is equivalent to using `MatchIt::match.data()` on the returned `matchit` object. See `help("generateDataset")` for more details.
 
 ### Estimating treatment effects and assessing model sensitivity
 
@@ -290,7 +291,7 @@ As sample size decreases, the confidence band width increases, as expected.
 
 ### Using other types of frontiers
 
-Above, we demonstrated the use of `MatchingFrontier` with a pair distance-based frontier. Other type of frontiers work slightly differently because no pairing is done, so the frontier tracks changes from a truly unadjusted sample to a fully adjusted sample, where the adjustment comes in form of discarding units. In contrast, the first step of the pair distance-based frontier tends to be better balanced than the original dataset because pairing has already been done. Below, we briefly demonstrate using an energy distance-based frontier to estimate the SATE.
+Above, we demonstrated the use of `MatchingFrontier` with a pair distance-based frontier. Other type of frontiers work slightly differently because no pairing is done, so the frontier tracks changes from a truly unadjusted sample to a fully adjusted sample, where the adjustment comes in form of discarding units. In contrast, the first step of the pair distance-based frontier tends to be better balanced than the original dataset because pairing has already been done. Below, we briefly demonstrate using an energy distance-based frontier to estimate the SATT.
 
 First, we compute the frontier using `makeFrontier()`.
 
@@ -298,12 +299,13 @@ First, we compute the frontier using `makeFrontier()`.
 energy.frontier <- makeFrontier(treat ~ age + educ + race + 
                                   married + nodegree + re74 + re75,
                                 data = lalonde, 
-                                QOI = "SATE", 
-                                metric = "energy")
+                                QOI = "SATT", 
+                                metric = "energy",
+                                verbose = FALSE)
 energy.frontier
 ```
 
-Next, we can plot the frontier to see the relationship between sample size and imbalance. Because we are estimating the SATE, imbalance represents the difference between the distribution of the treated units, the distribution of the control units, and the distribution of the original (target) sample. Thus, as imbalance decreases, the groups look more similar to each other and to the original sample.
+Next, we can plot the frontier to see the relationship between sample size and imbalance. Because we are estimating the SATT, imbalance represents the difference between the distribution of the control units and the distribution of the target (treated) group Thus, as imbalance decreases, the control group looks more similar to the treated group.
 
 ```{r}
 plot(energy.frontier)
@@ -338,9 +340,7 @@ energy.matched.data <- generateDataset(energy.frontier, N = 182)
 #Same result:          MatchIt::match.data(energy.matchit, data = lalonde)
 ```
 
-Because no pairing has taken place, we don't need to worry about replicating units in the dataset, so we don't have to set `dup = TRUE` and our output is the same as had we used `match.data()` on the `matchit` object.
-
-Below, we estimate the SATE using regression as we did before (note the weights are unnecessary here but it's good practice to use them):
+Below, we estimate the SATT using regression as we did before (note the weights are unnecessary here but it's good practice to use them):
 
 ```{r}
 # library("lmtest") #already loaded

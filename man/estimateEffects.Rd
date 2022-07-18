@@ -42,7 +42,7 @@ a model formula with the outcome on the left hand side and the treatment (and op
 the number of points along the frontier to estimate. Estimating effects at every point on the frontier can be time-consuming for large frontiers, especially when model dependence bounds are also computed, so using values less than the number of points can save time at the expense of providing less detail in the frontier estimates plot. The default is 250 or the number of points, whichever is smaller.
 }
   \item{method}{
-the method of computing model dependence bounds. Can be one of \code{"extreme-bounds"} or \code{"athey-imbens"} for the extreme bounds or Athey-Imbens procedures, respectively, or \code{"none"} to not compute model dependence bounds. Abbreviations allowed. Default is no model dependence bounds. See \fun{modelDependence}.
+the method of computing model dependence bounds. Can be one of \code{"extreme-bounds"} or \code{"athey-imbens"} for the extreme bounds or Athey-Imbens procedures, respectively, or \code{"none"} to not compute model dependence bounds. Abbreviations allowed. Default is no model dependence bounds. See \fun{modelDependence}. When using \code{metric = 'dist'} in \code{makeFrontier()}, only \code{"extreme-bounds"} is allowed.
 }
   \item{model.dependence.ests, specifications, cutpoints, cutpoint.method, seed}{
 arguments passed to \fun{modelDependence} when \code{method} is not \code{"none"}.
@@ -63,7 +63,7 @@ Ignored for \code{print()}.
 }
 }
 \details{
-\code{estimateEffects()} works by creating a dataset at each point along the frontier using the units that remain and fitting the supplied outcome model to those datasets, returning the point estimate, confidence interval bounds, and, if requested, model dependence bounds. The outcome model fit is that supplied to \code{base.form}, and the coefficient on the treatment is used at the treatment effect estimate. Currently, only linear models can be used and the treatment effect corresponds to the difference in means.
+\code{estimateEffects()} works by creating a dataset at each point along the frontier using the units that remain and fitting the supplied outcome model to those datasets, returning the point estimate, confidence interval bounds, and, if requested, model dependence bounds. The outcome model fit is that supplied to \code{base.form}, and the coefficient on the treatment is used at the treatment effect estimate. Currently, only linear models can be used and the treatment effect corresponds to the difference in means. Models will only be fit for datasets with 15 or more units.
 
 Confidence intervals are computed using HC3 robust standard errors as implemented in \pkg{sandwich}. Note that robust standard errors may not be accurate for matching with replacement; only the Abadie-Imbens (2006) standard errors implemented in the \pkg{Matching} package are accurate. Including covariates in the outcome model improves the performance of the standard errors, and so is recommended here and in general (Hill & Reiter, 2006).
 
@@ -105,7 +105,8 @@ data("lalonde", package = "MatchIt")
 f1 <- makeFrontier(treat ~ age + educ + married + re74,
                    data = lalonde,
                    QOI = "FSATT",
-                   metric = "mahal")
+                   metric = "dist",
+                   verbose = FALSE)
 
 f1
 
