@@ -208,7 +208,7 @@ mahal.matchit
 We can use `summary()` from `MatchIt` to assess balance on the covariates individually before and after matching, providing more detail than the original imbalance metric alone:
 
 ```{r}
-summary(mahal.matchit, improvement = FALSE)
+summary(mahal.matchit)
 ```
 
 See `help("summary.matchit", package = "MatchIt")` for more information on `summary()` and its options. Here we can see the initial imbalance and the imbalance remaining after selecting a point along the frontier. (Note that selecting the first point on the frontier, before dropping any units, still involves pairing the units when using the pair distance-based frontier, so balance at this point will typically not coincide with the balance for the full dataset prior to matching.) Balance in the matched sample is much better for most of the covariates, though the categorical covariates remain imbalanced (this is a known weakness of the Mahalanobis distance for matching [@rosenbaum2020; @stuart2010]). Finally, at the bottom we can see a summary of the remaining sample sizes. 100 treated units remain, just as we requested. Those 100 treated units are matched to a total of 52 control units because matching is done with replacement in `MatchingFrontier`. However, the matching weights required to estimate the FSATT only yield an effective sample size (ESS) of approximately 31 for for the control units.
