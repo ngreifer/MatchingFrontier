@@ -1,27 +1,54 @@
-plot.matchFrontier <- function(x, covs = NULL, stat = "std-diff", n.estimated, ...) {
+plot.matchFrontier <- function(x, covs = NULL, stat = NULL, n.estimated, axis = "n", ...) {
 
-  xlab <- switch(x$QOI,
-                 "SATE" = "Number of units dropped",
-                 "FSATE" = "Number of units dropped",
-                 "SATT" = "Number of control units dropped",
-                 "FSATT" = "Number of treated units dropped")
+  if (inherits(x, "MatchItFrontier") && identical(attr(x$distance, "type"), "ps")) {
+    axis <- try(match_arg(tolower(axis), c("caliper", "n")))
+    if (inherits(axis, "try-error")) {
+      customStop("'axis' must be either \"caliper\" or \"n\".", "plot()")
+    }
+  }
+  else {
+    if (!identical(axis, "n")) {
+      customWarning("'axis' is ignored unless 'x' is a MatchItFrontier object and propensity score matching was used.", "plot()")
+    }
+    axis <- "n"
+  }
+
+  if (axis == "caliper") {
+    xlab <- "Caliper"
+
+    #Rescale frontier$Xs to be on the caliper scale
+    matched <- which(!is.na(x$matched.to))
+    x$frontier$Xs <- c(vapply(x$frontier$drop.order[-1], function(d) x$distance[match(d[1], matched)], numeric(1L)), min(x$distance))
+  }
+  else {
+    xlab <- switch(x$QOI,
+                   "SATE" = "Number of units dropped",
+                   "FSATE" = "Number of units dropped",
+                   "SATT" = "Number of control units dropped",
+                   "FSATT" = "Number of treated units dropped")
+  }
 
   ylab <- firstup(metric2info(x$metric))
-
-  breaks <- scales::breaks_extended()(x$frontier$Xs)
-  upper.breaks <- x$n - breaks
 
   plot_geom <- if (length(x$frontier$Xs) == 1) geom_point else geom_line
 
   p <- ggplot()
 
-  if (is.null(covs)) {
+  if (is.null(stat) && is.null(covs)) {
     if (!missing(n.estimated)) {
-      customWarning("'n.estimated' is ignored when covs = NULL.", "plot.matchFrontier()")
+      customWarning("'n.estimated' is ignored when 'covs' and 'stat' are both NULL.", "plot.matchFrontier()")
     }
+
     p <- p + plot_geom(data = NULL, mapping = aes(x = x$frontier$Xs, y = x$frontier$Ys), ...)
+
+    if (!is.null(x$frontier$Y.origin)) {
+      p <- p + geom_point(data = NULL, mapping = aes(x = min(x$frontier$Xs), y = x$frontier$Y.origin))
+    }
   }
   else {
+    if (is.null(stat)) stat <- "std-diff"
+    else stat <- match_arg(stat, c("std-diff", "diff", "ks", "std-mean", "mean", "ks-target"))
+
     n.steps <-  length(x$frontier$Xs)
     if (missing(n.estimated)) n.estimated <- 250
     else {
@@ -31,24 +58,31 @@ plot.matchFrontier <- function(x, covs = NULL, stat = "std-diff", n.estimated, .
     }
     point.inds <- unique(round(seq(1, n.steps, length.out = min(n.estimated, n.steps))))
 
-    stat <- match_arg(stat, c("std-diff", "diff", "ks", "std-mean", "mean", "ks-target"))
-
-    if (is.numeric(covs)) {
-      if (!all(covs %in% seq_along(x$match.on))) {
-        customStop(paste0("if 'covs' is specified as numeric, the values must be between 1 and ", length(x$match.on), "."), "plot.matchFrontier()")
-      }
-      covs <- x$match.on[covs]
+    if (is.null(covs)) {
+      dataset <- as.data.frame(get.covs.matrix(data = x$dataset[x$match.on]))
     }
     else if (is.character(covs)) {
       if (!all(covs %in% names(x$dataset))) {
         customStop("all variables in 'covs' must be variables in the dataset supplied to makeFrontier().", "plot.matchFrontier()")
       }
+      dataset <- as.data.frame(get.covs.matrix(data = x$dataset[covs]))
+    }
+    else if (inherits(covs, "formula")) {
+      tryCatch({
+      dataset <- as.data.frame(get.covs.matrix(delete.response(terms(covs, data = x$dataset)),
+                                               data = x$dataset))},
+      error = function(e) {
+        cond <- conditionMessage(e)
+        if (startsWith(cond, "object") && endsWith(cond, "not found")) {
+          customStop("all variables in 'covs' must be variables in the dataset supplied to makeFrontier().", "plot.matchFrontier()")
+        }
+        else customStop(e, "plot.matchFrontier()")
+      })
     }
     else {
-      customStop("'covs' must be a numeric or character vector.", "plot.matchFrontier()")
+      customStop("'covs' must be a formula or character vector.", "plot.matchFrontier()")
     }
 
-    dataset <- as.data.frame(get.covs.matrix(data = x$dataset[covs]))
     cov.names <- names(dataset)
 
     if (stat == "std-diff") {
@@ -183,10 +217,22 @@ plot.matchFrontier <- function(x, covs = NULL, stat = "std-diff", n.estimated, .
                    "ks-target" = "Sample-target Kolmogorov-\nSmirnov statistic")
   }
 
-  p + scale_x_continuous(sec.axis = dup_axis(trans = ~ x$n - ., name = sub("dropped", "remaining", xlab),
-                                             breaks = upper.breaks),
-                         breaks = breaks) +
+  if (axis == "caliper") {
+    p <- p + scale_x_reverse()
+  }
+  else {
+    upper_breaks <- function(y, ...) {
+      x$n - scales::breaks_extended()(x$n - y, ...)
+    }
+    p <- p + scale_x_continuous(sec.axis = dup_axis(trans = ~ x$n - .,
+                                                    name = sub("dropped", "remaining", xlab),
+                                                    breaks = upper_breaks)) +
+      geom_blank(aes(y = 0))
+  }
+
+  p +
     labs(title = "Frontier Plot", x = xlab, y = ylab) +
     theme_bw() +
     theme(plot.title = element_text(hjust = .5))
+
 }
