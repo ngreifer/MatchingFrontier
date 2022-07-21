@@ -144,16 +144,15 @@ summary.matchFrontier <- function(object, N, Ndrop, ...) {
   return(out)
 }
 
-print.summary.matchFrontier <- function(x, digits = 3, ...) {
+print.summary.matchFrontier <- function(x, digits = 4, ...) {
   cat("Summary of matchFrontier object:\n\n")
 
   s <- matrix("", nrow = length(x[["N"]]), ncol = 4)
 
-
   s[!is.na(x[["Ntreated"]]), 1] <- as.character(as.integer(x[["Ntreated"]][!is.na(x[["Ntreated"]])]))
   s[!is.na(x[["Ncontrol"]]), 2] <- as.character(as.integer(x[["Ncontrol"]][!is.na(x[["Ncontrol"]])]))
   s[!is.na(x[["N"]]), 3] <- as.character(as.integer(x[["N"]][!is.na(x[["N"]])]))
-  s[,4] <- format(x[["Stat"]], digits = digits, scientific = FALSE)
+  s[,4] <- format(round(x[["Stat"]], digits), scientific = FALSE)
 
   s <- rbind(s, "")
 
