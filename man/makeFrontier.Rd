@@ -19,6 +19,7 @@ makeFrontier(x, ...)
              metric = 'dist',
              breaks = NULL,
              distance.mat = NULL,
+             ratio = NULL,
              verbose = TRUE, ...)
 
 \method{makeFrontier}{data.frame}(x,
@@ -28,6 +29,7 @@ makeFrontier(x, ...)
              metric = 'dist',
              breaks = NULL,
              distance.mat = NULL,
+             ratio = NULL,
              verbose = TRUE, ...)
 
 \method{print}{matchFrontier}(x, ...)
@@ -61,10 +63,10 @@ the imbalance metric to be minimized; allowable options include \code{"dist"}, \
 when \code{metric} is \code{'L1'} or \code{'L2'}, a named list containing a single number giving the number of bins for each or a string corresponding to a method of computing the number of bins for each covariate; for example, \code{list(X1 = 4, X3 = "sturges")}. Allowable strings include \code{"sturges"}, \code{"scott"}, and \code{"fd"}, which use the functions \pkgfun2{grDevices}{nclass}{nclass.Sturges}, \pkgfun2{grDevices}{nclass}{nclass.scott}, and \pkgfun2{grDevices}{nclass}{nclass.FD}, respectively. The default is \code{"sturges"} for variables that are not listed or if no argument is supplied. Can also be a single value to be applied to all numeric variables, or the single value \code{"median"} (see Details). Similar to the \code{cutpoints} argument of \code{MatchIt::matchit()} with \code{\link[MatchIt:method_cem]{method = "cem"}}. Ignored for other \code{metric}s.
 }
   \item{distance.mat}{
-when \code{metric} is \code{'dist'} or \code{'energy'}, the distance measure used to define the distance between units. Can be \code{"mahalanobis"} for the Mahalanobis distance, \code{"scaled_euclidean"} for the Euclidean distance on the standardized covariates, \code{"euclidean"} for the Euclidean distance on the raw covariates, or a numeric distance matrix. When supplied as a numeric matrix, for \code{metric = 'dist'}, should be a distance matrix either with one row for each treated unit and one column for each control unit (i.e., an N1 by N0 matrix) or a row and column for each unit (i.e., an N by N matrix); and for \code{metric = 'energy'}, should be a full N by N distance matrix with a row and column for each unit. The default for \code{metric = 'dist'} is \code{"mahalanobis"} and for \code{metric = 'energy'} is \code{"scaled_euclidean"}. See Details. Abbreviations allowed. Ignored for other \code{metric}s.
+when \code{metric} is \code{'dist'} or \code{'energy'}, the distance measure used to define the distance between units. Can be \code{"mahalanobis"} for the Mahalanobis distance, \code{"scaled_euclidean"} for the Euclidean distance on the standardized covariates, \code{"euclidean"} for the Euclidean distance on the raw covariates, \code{"robust_mahalanobis"} for the robust Mahalanobis distance, or a numeric distance matrix. When supplied as a numeric matrix, for \code{metric = 'dist'}, should be a distance matrix either with one row for each treated unit and one column for each control unit (i.e., an N1 by N0 matrix) or a row and column for each unit (i.e., an N by N matrix); and for \code{metric = 'energy'}, should be a full N by N distance matrix with a row and column for each unit. The default for \code{metric = 'dist'} is \code{"mahalanobis"} and for \code{metric = 'energy'} is \code{"scaled_euclidean"}. See Details. Abbreviations allowed. Ignored for other \code{metric}s.
 }
-  \item{keep.n.equal}{
-\code{logical}; if \code{TRUE}, units will only be dropped from the larger treatment group until the groups are the same szie, at which point they will remain the same size. Ignored for distance-based frontiers and when \code{QOI} is \code{'SATT'}.
+  \item{ratio}{
+for pair distance-based frontiers, the number of matched each unit receives; \code{NULL} means the same as 1. For bin-based frontiers and energy distance-based frontiers when \code{QOI} is not \code{'SATT'}, units will only be dropped from the control group until the ratio between the group size is \code{ratio}, at which point the group size will remain at \code{ratio} as units from both groups are dropped. When \code{NA} (the default), there is no restriction on the group sizes.
 }
   \item{verbose}{
 \code{logical}; whether to print additional information about the frontier constructing process.
@@ -120,7 +122,7 @@ A \code{matchFrontier} object, which contains the matching frontier as well as i
 \item{treatment}{the name of the treatment variable.}
 \item{QOI}{the argument supplied to \code{QOI}.}
 \item{metric}{the argument supplied to \code{metric}.}
-\item{dataset}{the dataset containing the units.}
+\item{data}{the dataset containing the units.}
 \item{match.on}{a vector of the names of the covariates used in the matching.}
 \item{matched.to}{with a pair distance-based metric, the indices of the units to which each unit is paired. When \code{QOI} is \code{'FSATT'}, control units will have \code{NA} values.}
 \item{call}{the original call to \code{makeFrontier()}.}
