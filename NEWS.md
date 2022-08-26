@@ -13,17 +13,19 @@ See the version 4.0.0 updates below in addition to the ones here for a full desc
 
 * Frontiers can now be created for `matchit` objects after 1:1 propensity score matching using `MatchIt::matchit()`. This drops one pair of units at a time and considers how the chosen imbalance metric changes as the additional units are dropped, in particular to examine the propensity score paradox described by King and Nielsen (2019). The frontier can be viewed either as the number of pairs dropped/retained or the size of the caliper that yields the corresponding matched sample. See `help("makeFrontier.matchit")` for details.
 
-* The `metric` argument to `makeFrontier()` has been simplified; the allowable options are now `"dist"` (which replaces `"mahal"`, `"euclid"`, and `"custom"`), `L1` or `L2`, and `"energy"`. Using `metric = "dist"` now involves specifying the name of a distance matrix to the `distance.mat` argument to determine the distances used (see below). To request that bins are created using the "median" algorithm previously requested by setting `metric = "L1median"` or `"L2median"`, the `breaks` argument can be set to `"median"`.
+* The `metric` argument to `makeFrontier()` has been simplified; the allowable options are now `"dist"` (which replaces `"mahal"`, `"euclid"`, and `"custom"`), `"L1"` or `"L2"`, and `"energy"`. Using `metric = "dist"` now involves specifying the name of a distance matrix to the `distance.mat` argument to determine the distances used (see below). To request that bins are created using the "median" algorithm previously requested by setting `metric = "L1median"` or `"L2median"`, the `breaks` argument can be set to `"median"`.
 
 * Different distance matrices can be used with `metric = "dist"` and `metric = "energy"` by supplying an argument to `distance.mat` naming the distance matrix to be used. Allowable options include `"mahalanobis"` for the Mahalanobis distance (the default with `metric = "dist"`), `"scaled_euclidean"` for the Euclidean distance computed using the standardized covariates (the default with `metric = "energy"`), and `"euclidean"` for the Euclidean distance computed using the raw covariates. These are computed using the corresponding functions in `MatchIt`, which speeds up computations.
 
-* Added the `keep.n.equal` argument to `makeFrontier()` for bin- and energy-based frontiers. When the QOI is the FSATE or SATE, setting this argument to `TRUE` ensures that only units from the larger of the two treatment groups are dropped until the groups are the same size, at which point they are kept the same size as additional units are dropped. This ensures one group does not get too small. For energy-based frontiers, this can sometimes lead to a frontier with better optimal balance. The argument is ignored for the SATT and distance-based frontiers.
+* Added the `ratio` argument to `makeFrontier()` (which has a different meaning from version prior to 4.0.0). For bin- and energy distance-based frontiers, when the QOI is the FSATE or SATE, setting this argument to a number ensures that only units from the larger of the two treatment groups are dropped until the groups size are in a ratio equal to the value supplied, at which point they are kept at that ratio as additional units are dropped. This ensures one group does not get too small. For bin-based frontiers, this corresponds to the matching ratio $k$ in $k:1$ matching.
+
+* Added the `N` and `Ndrop` arguments to `estimateEffects()`, which can be used to restrict effect estimation to a subset of points along the frontier. This is especially useful for bin- and energy distance-based frontiers where many points along the frontier have unacceptable imbalance.
 
 * Fixed a bug where zooming in on a frontier plot using `coord_cartesian()` would cause the axis labels to vanish.
 
-* Improved the balancing performance of bin-based frontiers for the FSATE. Computing the frontier may take a bit longer, but the frontier will tend toward exact balance, whereas in the past it would frequently diverge. The current implementation finds the unit that, when dropped, yields the best improvement in the balance measure.
+* Improved the balancing performance of bin-based frontiers. Computing the frontier may take a bit longer, but the frontier will tend toward exact balance, whereas in the past it would frequently diverge. The current implementation finds the unit that, when dropped, yields the best improvement in the balance measure.
 
-* Slightly improved the performance of computing energy frontiers.
+* Improved the performance of computing energy frontiers.
 
 * Fixed a bug where the progress bar did not correspond to the actual progress being made (and so would jump from a moderate number to 100% in a single step).
 
