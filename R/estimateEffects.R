@@ -145,8 +145,6 @@ estimateEffects <- function(frontier.object,
     attr(method, "cutpoint.method") <- cutpoint.method
   }
 
-
-
   # Estimate effects
   if (verbose) {
     cat("Estimating effects...\n")
@@ -154,7 +152,6 @@ estimateEffects <- function(frontier.object,
   }
 
   #Estimate effect, mod dep, and CI in unadjusted data
-
   fit.un <- estOneEffect(base.form, frontier.object$data, treatment,
                          alpha = alpha)
 
@@ -171,7 +168,6 @@ estimateEffects <- function(frontier.object,
                                                  cutpoints = cutpoints,
                                                  verbose = FALSE)[1:2]
   }
-
 
   if (verbose) setTxtProgressBar(pb, 1)
 
