@@ -175,7 +175,7 @@ Here we can see that after an initial imbalance (the three dots on the left side
 
 To view (standardized) means for each covariate, which allows us to see how the distribution of covariates in the estimation sample varies across the frontier, we can set `stat = "std-mean"` for standardized means and `stat = "mean"` for raw means. Using standardized means allows us to see how the standardized mean difference between the covariates in the estimation sample and the covariates in the target sample varies across the frontier; values close to zero indicate that the estimation sample strongly resembles the target sample. Using raw means allows us to see the actual location of the covariate means across the frontier (though make sure variables are on the same scale if multiple are to be included in the same plot!).
 
-```{r, fig.show='hold'}
+```{r}
 #Standardized means for continuous covariates
 plot(mahal.frontier, covs = c("age", "educ", "re74"),
      stat = "std-mean")
@@ -210,7 +210,7 @@ We can use `summary()` from `MatchIt` to assess balance on the covariates indivi
 summary(mahal.matchit)
 ```
 
-See `help("summary.matchit", package = "MatchIt")` for more information on `summary()` and its options. Here we can see the initial imbalance and the imbalance remaining after selecting a point along the frontier. (Note that selecting the first point on the frontier, before dropping any units, still involves pairing the units when using the pair distance-based frontier, so balance at this point will typically not coincide with the balance for the full dataset prior to matching.) Balance in the matched sample is much better for most of the covariates, though the categorical covariates remain imbalanced (this is a known weakness of the Mahalanobis distance for matching [@rosenbaum2020; @stuart2010]). Finally, at the bottom we can see a summary of the remaining sample sizes. 100 treated units remain, just as we requested. Those 100 treated units are matched to a total of 52 control units because matching is done with replacement in `MatchingFrontier`. However, the matching weights required to estimate the FSATT only yield an effective sample size (ESS) of approximately 31 for for the control units.
+See `help("summary.matchit", package = "MatchIt")` for more information on `summary()` and its options. Here we can see the initial imbalance and the imbalance remaining after selecting a point along the frontier. (Note that selecting the first point on the frontier, before dropping any units, still involves pairing the units when using the pair distance-based frontier, so balance at this point will typically not coincide with the balance for the full dataset prior to matching.) Balance in the matched sample is much better for most of the covariates, though the categorical covariates remain imbalanced (this is a known weakness of the Mahalanobis distance for matching [@rosenbaum2020; @stuart2010]). Finally, at the bottom we can see a summary of the remaining sample sizes. 100 treated units remain, just as we requested. Those 100 treated units are matched to a total of 43 control units because matching is done with replacement in `MatchingFrontier`. However, the matching weights required to estimate the FSATT only yield an effective sample size (ESS) of approximately 20 for for the control units.
 
 To estimate the treatment effect at this point on the frontier, we can use a regression of the outcome on the treated (and optionally the covariates) in the matched sample. The matched dataset can be extracted in one of two ways: using `match.data()` or `get_matches()` on the `matchit` object, or using `generateDataset()` on the `matchFrontier` object. Both yield identical results.
 
@@ -316,25 +316,25 @@ In contrast to pair distance-based frontiers, energy distance-based frontiers ar
 summary(energy.frontier)
 ```
 
-Here we can see that the balance is best when 182 units remain, though the plot indicates that it is possible to have similar balance while discarding fewer units. We can identify these points using `summary()` with `N` or `Ndrop` specified:
+Here we can see that the balance is best when 37 units remain, though the plot indicates that it is possible to have similar balance while discarding fewer units. We can identify these points using `summary()` with `N` or `Ndrop` specified:
 
 ```{r}
-summary(energy.frontier, N = seq(182, 222, by = 10))
+summary(energy.frontier, N = seq(27, 127, by = 10))
 ```
 
 We can use the steps previously described to extract the dataset at a point on the frontier and estimate its treatment effect and model dependence. First we will turn that point into a `matchit` object and assess balance on the covariates.
 
 ```{r}
-energy.matchit <- frontier_to_matchit(energy.frontier, N = 182)
-#same thing:      frontier_to_matchit(energy.frontier, Ndrop = 432)
+energy.matchit <- frontier_to_matchit(energy.frontier, N = 37)
+#same thing:      frontier_to_matchit(energy.frontier, Ndrop = 148)
 
 summary(energy.matchit, un = FALSE)
 ```
 
-We can see that mean difference are very low in the extracted sample, indicating good balance. We can move forward with effect estimation and assessing model dependence after extracting the matched dataset.
+We can see that standardized mean differences are very low in the extracted sample, indicating good balance. We can move forward with effect estimation and assessing model dependence after extracting the matched dataset.
 
 ```{r}
-energy.matched.data <- generateDataset(energy.frontier, N = 182)
+energy.matched.data <- generateDataset(energy.frontier, N = 37)
 #Same result:          MatchIt::match.data(energy.matchit, data = lalonde)
 ```
 
@@ -363,13 +363,13 @@ energy.MD <- modelDependence(re78 ~ treat + age + educ + race +
 energy.MD
 ```
 
-Next, we will estimate effects and model dependence bounds across the frontier. Because most points along the frontier have inadequate balance, we will only estimate treatment effects at the points along the frontier with the smallest energy distances using the `Ndrop` argument, which should contain the bounds of the range of points along the frontier for which effects are to be estimated. Here, we restrict effect estimation to points on the frontier after dropping between 310 and 410 control units.
+Next, we will estimate effects and model dependence bounds across the frontier. Because most points along the frontier have inadequate balance, we will only estimate treatment effects at the points along the frontier with the smallest energy distances using the `Ndrop` argument, which should contain the bounds of the range of points along the frontier for which effects are to be estimated. Here, we restrict effect estimation to points on the frontier with between 27 and 127 control units remaining.
 
 ```{r}
 energy.estimates <- estimateEffects(energy.frontier, 
                                     base.form = re78 ~ treat + age +
                                       educ + race + married + nodegree + re74 + re75,
-                                    Ndrop = c(310, 410),
+                                    N = c(27, 127),
                                     method = "athey-imbens", 
                                     cutpoint.method = "mean",
                                     verbose = FALSE)
