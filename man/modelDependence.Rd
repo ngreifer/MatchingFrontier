@@ -10,7 +10,7 @@ Compute Model Dependence Bounds
 \code{modelDependence()} computes model dependence bounds for a single dataset using either the extreme bounds procedure or Athey-Imbens procedure. The width of the bounds indicates the degree of model dependence present in the dataset. Wide bounds imply that treatment effects could vary greatly depending on the outcome model used and therefore depend heavily on it.
 }
 \usage{
-modelDependence(base.form = NULL, dataset, treatment,
+modelDependence(base.form = NULL, data, treatment,
                 outcome, covariates, weights = NULL,
                 method = c("extreme-bounds", "athey-imbens"),
                 model.dependence.ests = 101,
@@ -26,7 +26,7 @@ modelDependence(base.form = NULL, dataset, treatment,
   \item{base.form}{
 a \code{\link{formula}} relating the outcome to the treatment and covariates, e.g., \code{Y ~ A + X1 + X2 + ...} where \code{Y} represents the outcome variable, \code{A} the treatment variable, and \code{X1} and \code{X2} the covariates. This should correspond to the "default" or originally intended outcome model whose sensitivity is being assessed. If omitted, will just use a simple regression of the outcome on the treatment.
 }
-  \item{dataset}{
+  \item{data}{
 a data frame containing the variables named in \code{base.form}, \code{treatment}, \code{outcome}, and \code{covariates}.
 }
   \item{treatment}{
@@ -100,7 +100,7 @@ data("lalonde", package = "MatchIt")
 #Model dependence prior to matching
 b1 <- modelDependence(re78 ~ treat + age + educ + married +
                         race + nodegree + re74 + re75,
-                      dataset = lalonde, treatment = "treat",
+                      data = lalonde, treatment = "treat",
                       method = "extreme-bounds", seed = 12345)
 b1 # diff = 823.8418
 plot(b1)
@@ -112,7 +112,7 @@ m.out <- matchit(treat ~ age + educ + married + race +
 
 b2 <- modelDependence(re78 ~ treat + age + educ + married +
                         race + nodegree + re74 + re75,
-                      dataset = lalonde, treatment = "treat",
+                      data = lalonde, treatment = "treat",
                       method = "extreme-bounds", seed = 12345,
                       weights = m.out$weights)
 b2 # diff = 684.6681
@@ -123,7 +123,7 @@ plot(b2)
 #  other covariates at their means
 b3 <- modelDependence(re78 ~ treat + age + educ + married +
                         race + nodegree + re74 + re75,
-                      dataset = lalonde, treatment = "treat",
+                      data = lalonde, treatment = "treat",
                       method = "athey-imbens",
                       cutpoints = list(re74 = 100, re75 = 100),
                       cutpoint.method = "mean")

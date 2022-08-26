@@ -28,7 +28,7 @@ generateDataset <- function(frontier.object, N, Ndrop, weights = "weights",
   ind <- which.min(Ns[Ns >= N])
   drop.inds <- unlist(frontier.object$frontier$drop.order[seq_len(ind)])
 
-  d <- frontier.object$dataset
+  d <- frontier.object$data
 
   matched.to <- frontier.object$matched.to
 
@@ -62,11 +62,11 @@ generateDataset <- function(frontier.object, N, Ndrop, weights = "weights",
   d <- makeMatchedData(d, matched.to = matched.to,
                        drop.inds = drop.inds, weights = weights,
                        dup = dup,
-                       with_replacement = anyDuplicated(na.omit(matched.to)) != 0,
+                       with_replacement = anyDuplicated(na.omit(as.vector(matched.to))) != 0,
                        subclass = subclass, id = id)
 
   if (!is.null(matched.to) && dup) {
-    new.cols <- c(attr(d, "id"), attr(d, "subclass"), attr(d, "weights"))
+    # new.cols <- c(attr(d, "id"), attr(d, "subclass"), attr(d, "weights"))
 
     d[] <- d[order(d[[attr(d, "subclass")]], d[[frontier.object$treatment]],
                    method = "radix", decreasing = c(FALSE, TRUE)),]

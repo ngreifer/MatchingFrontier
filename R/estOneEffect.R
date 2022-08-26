@@ -1,12 +1,12 @@
-estOneEffect <- function(formula, dataset, treatment, weights = NULL, subclass = NULL, id = NULL, alpha = .05) {
+estOneEffect <- function(formula, data, treatment, weights = NULL, subclass = NULL, id = NULL, alpha = .05) {
 
-  dataset <- process_safe_for_model(dataset, formula)
+  data <- process_safe_for_model(data, formula)
 
   #For now, ignoring clustering by subclass and ID. Seems vcovHC is better for matching
   #w/ replacement.
-  subclass <- id <- NULL
+  id <- NULL
 
-  fit <- do.call("lm", list(formula, data = dataset, weights = weights), quote = TRUE)
+  fit <- do.call("lm", list(formula, data = data, weights = weights), quote = TRUE)
 
   if (!is.null(alpha)) {
     if (is.null(subclass) && is.null(id)) {

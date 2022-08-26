@@ -1,10 +1,10 @@
-getBins <- function(dataset, match.on, breaks = NULL){
+getBins <- function(data, match.on, breaks = NULL){
 
   # Remove dropped covs
-  dataset <- dataset[match.on]
-  for (i in seq_len(ncol(dataset))) {
-    if (is.character(dataset[[i]])) dataset[[i]] <- factor(dataset[[i]])
-    if (is.factor(dataset[[i]])) dataset[[i]] <- as.numeric(dataset[[i]])
+  data <- data[match.on]
+  for (i in seq_len(ncol(data))) {
+    if (is.character(data[[i]])) data[[i]] <- factor(data[[i]])
+    if (is.factor(data[[i]])) data[[i]] <- as.numeric(data[[i]])
   }
 
   #Process breaks; adapted from MatchIt:::cem_matchit()
@@ -52,21 +52,21 @@ getBins <- function(dataset, match.on, breaks = NULL){
   bin.list <- setNames(vector("list", length(match.on)), match.on)
   for (i in match.on) {
     if (!i %in% names(breaks)) {
-      if (is.character(dataset[[i]]) || is.factor(dataset[[i]])) next
+      if (is.character(data[[i]]) || is.factor(data[[i]])) next
       else breaks[[i]] <- "sturges"
     }
 
     if (is.character(breaks[[i]])) {
       breaks[[i]] <- match_arg(tolower(breaks[[i]]), c("sturges", "fd", "scott"))
       breaks[[i]] <- switch(breaks[[i]],
-                            sturges = nclass.Sturges(dataset[[i]]),
-                            fd = nclass.FD(dataset[[i]]),
-                            scott = nclass.scott(dataset[[i]]))
+                            sturges = nclass.Sturges(data[[i]]),
+                            fd = nclass.FD(data[[i]]),
+                            scott = nclass.scott(data[[i]]))
       #Breaks is now a single number
     }
 
     #breaks is number of bins
-    bin.list[[i]] <- seq(min(dataset[[i]]), max(dataset[[i]]), length = breaks[[i]] + 1)
+    bin.list[[i]] <- seq(min(data[[i]]), max(data[[i]]), length = breaks[[i]] + 1)
     bin.list[[i]][c(1, length(bin.list[[i]]))] <- c(-Inf, Inf)
 
   }
@@ -74,17 +74,17 @@ getBins <- function(dataset, match.on, breaks = NULL){
   return(bin.list)
 }
 
-assignToBins <- function(dataset, match.on, bins.list, subset) {
-  if (missing(subset)) subset <- seq_len(nrow(dataset))
+assignToBins <- function(data, match.on, bins.list, subset) {
+  if (missing(subset)) subset <- seq_len(nrow(data))
 
-  dataset <- dataset[subset, match.on]
+  data <- data[subset, match.on]
 
   for (i in match.on) {
-    if (!is.character(dataset[[i]]) && !is.factor(dataset[[i]]))
-      dataset[[i]] <- findInterval(dataset[[i]], bins.list[[i]])
+    if (!is.character(data[[i]]) && !is.factor(data[[i]]))
+      data[[i]] <- findInterval(data[[i]], bins.list[[i]])
   }
 
-  strata <- do.call("paste", c(dataset, list(sep = "|")))
+  strata <- do.call("paste", c(data, list(sep = "|")))
 
   return(strata)
 }
@@ -95,7 +95,7 @@ get.diffs <- function(strataholder, treat.vec, num.treated, num.control){
     sum(treat.vec[x] == 0) / num.control - sum(treat.vec[x] == 1) / num.treated))
 }
 
-getBinsAtMedian <- function(dataset, match.on, treat.vec, metric){
+getBinsAtMedian <- function(data, match.on, treat.vec, metric){
   if (startsWith(metric, "l1")) {
     Lstat <- function(diffs) .5*sum(abs(diffs))
   }
@@ -108,24 +108,24 @@ getBinsAtMedian <- function(dataset, match.on, treat.vec, metric){
 
   n.coarsenings <- 1001
 
-  dataset <- dataset[match.on]
-  for (i in seq_len(ncol(dataset))) {
-    if (is.character(dataset[[i]])) dataset[[i]] <- factor(dataset[[i]])
-    dataset[[i]] <- as.numeric(dataset[[i]])
+  data <- data[match.on]
+  for (i in seq_len(ncol(data))) {
+    if (is.character(data[[i]])) data[[i]] <- factor(data[[i]])
+    data[[i]] <- as.numeric(data[[i]])
   }
 
-  nunique.covs <- vapply(match.on, function(i) length(unique(dataset[[i]])), integer(1L))
+  nunique.covs <- vapply(match.on, function(i) length(unique(data[[i]])), integer(1L))
 
   bin.lists <- lapply(seq_len(n.coarsenings), function(i) {
     breaks <- setNames(lapply(nunique.covs, function(nu) {
       sample(seq(min(2, nu), min(12, nu)), 1)
     }), match.on)
 
-    getBins(dataset, match.on, breaks)
+    getBins(data, match.on, breaks)
   })
 
   Lstats <- vapply(bin.lists, function(b) {
-    strataholder <- assignToBins(dataset, match.on, b)
+    strataholder <- assignToBins(data, match.on, b)
     Lstat(get.diffs(strataholder, treat.vec, num.treated, num.control))
   }, numeric(1L))
 

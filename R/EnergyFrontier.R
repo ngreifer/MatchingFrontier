@@ -1,6 +1,6 @@
-EnergyFrontier <- function(treatment, dataset, formula, metric, QOI, keep.n.equal, verbose){
+EnergyFrontier <- function(treatment, data, formula, metric, QOI, ratio, verbose){
 
-  treat <- dataset[[treatment]]
+  treat <- data[[treatment]]
 
   if (is.null(attr(metric, "distance.mat"))) distance.mat <- "scaled_euclidean"
   else distance.mat <- attr(metric, "distance.mat")
@@ -14,16 +14,16 @@ EnergyFrontier <- function(treatment, dataset, formula, metric, QOI, keep.n.equa
 
     distance.mat <- {
       if (distance.mat == "mahalanobis") {
-        MatchIt::mahalanobis_dist(new.formula, dataset)
+        MatchIt::mahalanobis_dist(new.formula, data)
       }
       else if (distance.mat == "scaled_euclidean") {
-        MatchIt::scaled_euclidean_dist(new.formula, dataset)
+        MatchIt::scaled_euclidean_dist(new.formula, data)
       }
       else if (distance.mat == "euclidean") {
-        MatchIt::euclidean_dist(new.formula, dataset)
+        MatchIt::euclidean_dist(new.formula, data)
       }
       else if (distance.mat == "robust_mahalanobis") {
-        MatchIt::robust_mahalanobis_dist(new.formula, dataset)
+        MatchIt::robust_mahalanobis_dist(new.formula, data)
       }
     }
 
@@ -33,7 +33,7 @@ EnergyFrontier <- function(treatment, dataset, formula, metric, QOI, keep.n.equa
 
     if (!is.matrix(distance.mat) || !all(dim(distance.mat) == length(treat)) ||
         !all(abs(diag(distance.mat)) < 1e-8) || any(distance.mat < 0) ||
-        !isSymmetric(unname(distance.mat))) {
+        !check_symmetric(unname(distance.mat))) {
       customStop("'distance.mat' must be one of \"mahalanobis\", \"scaled_euclidean\", or \"euclidean\" or a square, symmetric, N x N distance matrix when metric = \"energy\".",
                  "makeFrontier()")
     }
@@ -42,13 +42,13 @@ EnergyFrontier <- function(treatment, dataset, formula, metric, QOI, keep.n.equa
   if (verbose) cat("Calculating frontier...\n")
 
   if (QOI == "SATE") {
-    frontier <- energyToFrontierSATE(distance.mat, treat, verbose, keep.n.equal)
+    frontier <- energyToFrontierSATE(distance.mat, treat, verbose, ratio)
   }
   else if (QOI == "FSATE") {
-    frontier <- energyToFrontierFSATE(distance.mat, treat, verbose, keep.n.equal)
+    frontier <- energyToFrontierFSATE(distance.mat, treat, verbose, ratio)
   }
   else if (QOI == "SATT") {
-    frontier <- energyToFrontierSATT(distance.mat, treat, verbose, keep.n.equal)
+    frontier <- energyToFrontierSATT(distance.mat, treat, verbose, ratio)
   }
 
   if (verbose) cat("Done!\n")
