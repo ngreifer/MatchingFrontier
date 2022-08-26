@@ -13,6 +13,7 @@ estimateEffects(frontier.object,
                 outcome,
                 base.form = NULL,
                 n.estimated = 250,
+                N, Ndrop,
                 method = c("none", "extreme-bounds",
                            "athey-imbens"),
                 model.dependence.ests = 100,
@@ -40,6 +41,9 @@ a model formula with the outcome on the left hand side and the treatment (and op
 }
   \item{n.estimated}{
 the number of points along the frontier to estimate. Estimating effects at every point on the frontier can be time-consuming for large frontiers, especially when model dependence bounds are also computed, so using values less than the number of points can save time at the expense of providing less detail in the frontier estimates plot. The default is 250 or the number of points, whichever is smaller.
+}
+  \item{N, Ndrop}{
+the number of units remaining or dropped, respectively, in the sample at the desired points on the frontier for which effects are to be estimated. Should be a vector of 2 values containing the start and end of the range of the desired points. Exactly one of \code{N} or \code{Ndrop} can be specified. If both are omitted, will estimate effects along the full range of the frontier.
 }
   \item{method}{
 the method of computing model dependence bounds. Can be one of \code{"extreme-bounds"} or \code{"athey-imbens"} for the extreme bounds or Athey-Imbens procedures, respectively, or \code{"none"} to not compute model dependence bounds. Abbreviations allowed. Default is no model dependence bounds. See \fun{modelDependence}. When using \code{metric = 'dist'} in \code{makeFrontier()}, only \code{"extreme-bounds"} is allowed.
@@ -71,7 +75,7 @@ The model dependence bounds are computed using the same machinery as is used wit
 }
 \value{
 A \code{frontierEstimates} object with the following components:
-\item{Xs}{a vector containing the cumulative number of units dropped at each point on the frontier for which effects were estimated. The first value will be 0.}
+\item{Xs}{a vector containing the cumulative number of units dropped at each point on the frontier for which effects were estimated..}
 \item{coefs}{a vector containing the treatment effect estimates at each point on the frontier for which effects were estimated.}
 \item{CIs}{a list containing the upper and lower confidence interval limits at each point on the frontier for which effects were estimated.}
 \item{mod.dependence}{a list containing the upper and lower model dependence bounds at each point on the frontier for which effects were estimated.}
@@ -121,4 +125,14 @@ plot(e1, band = "model-dependence")
 plot(e1, band = "confidence")
 
 summary(e1, Ndrop = c(10, 85))
+
+# Only estimate effects for a subset of the forntier
+# (points with remaining sample sizes between 50 and
+# 100)
+e2 <- estimateEffects(f1,
+                      base.form = re78 ~ treat + age +
+                                    educ + married + re74,
+                      N = c(50, 100))
+e2
+plot(e2)
 }
