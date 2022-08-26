@@ -1,4 +1,4 @@
-binsToFrontierFSATE <- function(strata, treat.vec, metric = "l1", verbose, keep.n.equal = FALSE) {
+binsToFrontierFSATE <- function(strata, treat.vec, metric = "l1", verbose, ratio = NULL) {
 
   N1 <- sum(treat.vec == 1)
   N0 <- sum(treat.vec == 0)
@@ -41,7 +41,7 @@ binsToFrontierFSATE <- function(strata, treat.vec, metric = "l1", verbose, keep.
 
     L.best.treated.to.drop <- L.best.control.to.drop <- Inf
 
-    if (!keep.n.equal || N1 > N0) {
+    if (is.null(ratio) || N0 < N1 * ratio) {
       altered.treated.props <- treated.counts/(N1 - 1)
 
       altered.treated.diffs <- altered.treated.props - control.props
@@ -53,7 +53,7 @@ binsToFrontierFSATE <- function(strata, treat.vec, metric = "l1", verbose, keep.
       L.best.treated.to.drop <- Lstat(altered.treated.diffs)
     }
 
-    if (!keep.n.equal || N1 <= N0) {
+    if (is.null(ratio) || N0 >= N1 * ratio) {
       altered.control.props <- control.counts/(N0 - 1)
 
       altered.control.diffs <- altered.control.props - treated.props
@@ -92,14 +92,14 @@ binsToFrontierFSATE <- function(strata, treat.vec, metric = "l1", verbose, keep.
       new.Lstat <- L.best.control.to.drop
     }
 
-    if (N1 == 0 || N0 == 0) break
+    if (N1 == 1 || N0 == 1) break
 
     if (verbose) {
       setTxtProgressBar(pb, N - (N0 + N1))
     }
 
     if (new.Lstat < min.Lstat) min.Lstat <- new.Lstat
-    # else if ((N1+N0) < .9*N && new.Lstat - min.Lstat > .2*(Ys[1] - min.Lstat)) break
+    else if ((N1+N0) < .9*N && new.Lstat - min.Lstat > .3*(Ys[1] - min.Lstat)) break
 
     Ys[k] <- new.Lstat
     drop.order[[k]] <- drop
