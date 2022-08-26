@@ -1,5 +1,5 @@
 #Remove control units to lower between-group energy distance
-energyToFrontierSATT <- function(distance.mat, treat.vec, verbose, keep.n.equal = FALSE) {
+energyToFrontierSATT <- function(distance.mat, treat.vec, verbose, ratio = NA) {
   #Energy distance formula:
   #2/n1n0 sum(D[t,c]) - 1/n1n1 sum(D[t,t]) - 1/n0n0 sum(D[c,c])
 
@@ -70,23 +70,26 @@ energyToFrontierSATT <- function(distance.mat, treat.vec, verbose, keep.n.equal 
     }
 
     #Compute new edist with dropped units removed
-    d00i_drop.control <- d00i[drop.control]
-    d00i_idrop.control <- d00i[-drop.control]
 
-    Sd10 <- Sd10 - sum(d10[,d00i_drop.control])
+    d00i_control.dropped <- d00i[drop.control]
+    d00i_control.kept <- d00i[-drop.control]
+
+    #d10 contributions
+    Sd10 <- Sd10 - sum(d10[, d00i_control.dropped])
     cSd10 <- cSd10[-drop.control]
 
-    Sd00 <- Sd00 - 2*sum(d00[d00i_idrop.control, d00i_drop.control]) -
-      sum(d00[d00i_drop.control, d00i_drop.control])
-    cSd00 <- cSd00[-drop.control] - col_sums(d00[d00i_drop.control, d00i_idrop.control, drop = FALSE])
-    d00i <- d00i_idrop.control
+    #d00 contributions
+    Sd00 <- Sd00 - 2*sum(d00[d00i_control.kept, d00i_control.dropped]) -
+      sum(d00[d00i_control.dropped, d00i_control.dropped])
+    cSd00 <- cSd00[-drop.control] - col_sums(d00[d00i_control.dropped, d00i_control.kept, drop = FALSE])
+    d00i <- d00i_control.kept
 
     edist <- 2*Sd10/(N1*N0) - Sd11/(N1*N1) - Sd00/(N0*N0)
 
     #After passing sample size threshold of 90% of original N, stop if
     #new edist is larger than smallest edist
     if (edist < min.edist) min.edist <- edist
-    # else if (N0/N0_ > .9 && edist-min.edist > .2*(Ys[1]-min.edist)) break
+    else if (N0/N0_ < .9 && edist-min.edist > .2*(Ys[1]-min.edist)) break
 
     #Record new edist and units dropped
     Ys[k] <- edist

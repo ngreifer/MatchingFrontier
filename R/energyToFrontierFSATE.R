@@ -1,5 +1,4 @@
-#Remove units to lower between-group energy distance
-energyToFrontierFSATE <- function(distance.mat, treat.vec, verbose, keep.n.equal = FALSE) {
+energyToFrontierFSATE <- function(distance.mat, treat.vec, verbose, ratio = NULL) {
   #Energy distance formula:
   #2/n1n0 sum(D[t,c]) - 1/n1n1 sum(D[t,t]) - 1/n0n0 sum(D[c,c])
 
@@ -54,16 +53,16 @@ energyToFrontierFSATE <- function(distance.mat, treat.vec, verbose, keep.n.equal
 
   for (k in seq_len(N)[-1]) {
 
-    if (keep.n.equal) {
-      if (N0 > N1) {
-        largest.contribution <- max(control.contributions)
-        drop.treated <- integer(0L)
-        drop.control <- which.min(abs(control.contributions - largest.contribution))
-      }
-      else {
+    if (!is.null(ratio)) {
+      if (N0 <= N1 * ratio) {
         largest.contribution <- max(treated.contributions)
         drop.treated <- which.min(abs(treated.contributions - largest.contribution))
         drop.control <- integer(0L)
+      }
+      else {
+        largest.contribution <- max(control.contributions)
+        drop.treated <- integer(0L)
+        drop.control <- which.min(abs(control.contributions - largest.contribution))
       }
     }
     else {
@@ -80,7 +79,8 @@ energyToFrontierFSATE <- function(distance.mat, treat.vec, verbose, keep.n.equal
     if (length(drop.treated) > 0) {
       treated.ind <- treated.ind[-drop.treated]
       N1 <- length(treated.ind)
-    } else if (length(drop.control) > 0) {
+    }
+    if (length(drop.control) > 0) {
       control.ind <- control.ind[-drop.control]
       N0 <- length(control.ind)
     }
@@ -94,38 +94,50 @@ energyToFrontierFSATE <- function(distance.mat, treat.vec, verbose, keep.n.equal
 
     #Compute new edist with dropped units removed
     if (length(drop.treated) > 0) {
-      d11i_drop.treated <- d11i[drop.treated]
-      d11i_idrop.treated <- d11i[-drop.treated]
+      d11i_treated.dropped <- d11i[drop.treated]
+      d11i_treated.kept <- d11i[-drop.treated]
+    }
+    else {
+      d11i_treated.dropped <- integer(0L)
+      d11i_treated.kept <- d11i
     }
     if (length(drop.control) > 0) {
-      d00i_drop.control <- d00i[drop.control]
-      d00i_idrop.control <- d00i[-drop.control]
+      d00i_control.dropped <- d00i[drop.control]
+      d00i_control.kept <- d00i[-drop.control]
+    }
+    else {
+      d00i_control.dropped <- integer(0L)
+      d00i_control.kept <- d00i
     }
 
+    #d10 contributions
     if (length(drop.treated) > 0 && length(drop.control) > 0) {
-      Sd10 <- Sd10 - sum(d10[d11i_drop.treated, d00i_drop.control])
+      rSd10 <- rSd10[-drop.treated] - row_sums(d10[d11i_treated.kept, d00i_control.dropped, drop = FALSE])
+      cSd10 <- cSd10[-drop.control] - col_sums(d10[d11i_treated.dropped, d00i_control.kept, drop = FALSE])
     }
-    if (length(drop.treated) > 0) {
-      Sd10 <- Sd10 - sum(d10[d11i_drop.treated, d00i])
+    else if (length(drop.treated) > 0) {
       rSd10 <- rSd10[-drop.treated]
-      cSd10 <- cSd10 - col_sums(d10[d11i_drop.treated, d00i, drop = FALSE])
-      # d10 <- d10[-drop.treated,, drop = FALSE]
-
-      Sd11 <- Sd11 - 2*sum(d11[d11i_idrop.treated, d11i_drop.treated]) -
-        sum(d11[d11i_drop.treated, d11i_drop.treated])
-      cSd11 <- cSd11[-drop.treated] - col_sums(d11[d11i_drop.treated, d11i_idrop.treated, drop = FALSE])
-      d11i <- d11i_idrop.treated
-      # d11 <- d11[-drop.treated, -drop.treated, drop = FALSE]
+      cSd10 <- cSd10 - col_sums(d10[d11i_treated.dropped, d00i_control.kept, drop = FALSE])
     }
-    if (length(drop.control) > 0) {
-      Sd10 <- Sd10 - sum(d10[d11i,d00i_drop.control])
-      rSd10 <- rSd10 - row_sums(d10[d11i, d00i_drop.control, drop = FALSE])
+    else if (length(drop.control) > 0) {
+      rSd10 <- rSd10 - row_sums(d10[d11i_treated.kept, d00i_control.dropped, drop = FALSE])
       cSd10 <- cSd10[-drop.control]
+    }
+    Sd10 <- sum(rSd10)
 
-      Sd00 <- Sd00 - 2*sum(d00[d00i_idrop.control, d00i_drop.control]) -
-        sum(d00[d00i_drop.control, d00i_drop.control])
-      cSd00 <- cSd00[-drop.control] - col_sums(d00[d00i_drop.control, d00i_idrop.control, drop = FALSE])
-      d00i <- d00i_idrop.control
+    #d11 contributions
+    if (length(drop.treated) > 0) {
+      cSd11 <- cSd11[-drop.treated] - col_sums(d11[d11i_treated.dropped, d11i_treated.kept, drop = FALSE])
+      Sd11 <- sum(cSd11)
+      d11i <- d11i_treated.kept
+    }
+
+
+    #d00 contributions
+    if (length(drop.control) > 0) {
+      cSd00 <- cSd00[-drop.control] - col_sums(d00[d00i_control.dropped, d00i_control.kept, drop = FALSE])
+      Sd00 <- sum(cSd00)
+      d00i <- d00i_control.kept
     }
 
     edist <- 2*Sd10/(N1*N0) - Sd11/(N1*N1) - Sd00/(N0*N0)
@@ -133,7 +145,7 @@ energyToFrontierFSATE <- function(distance.mat, treat.vec, verbose, keep.n.equal
     #After passing sample size threhsold of 90% of original N, stop if
     #new edist is larger than smallest edist
     if (edist < min.edist) min.edist <- edist
-    # else if ((N1+N0)/N > .9 && edist-min.edist > .2*(Ys[1]-min.edist)) break
+    else if ((N1+N0)/N < .9 && edist-min.edist > .2*(Ys[1]-min.edist)) break
 
     #Record new edist and units dropped
     Ys[k] <- edist
