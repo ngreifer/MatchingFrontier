@@ -312,6 +312,18 @@ safe_ci <- function(fit, treatment, vcov. = sandwich::vcovHC, type = "HC3", alph
   lmtest::coefci(fit, treatment, vcov. = v, level = 1 - alpha)
 }
 
+#Check if matrix is symmatric, using stochastic sampling if matrix is too big in
+#order to avoid long run time of isSymmetric
+check_symmetric <- function(mat, use.random.at = 2000, n = 50000) {
+  r <- nrow(mat)
+  if (r < use.random.at) return(isSymmetric.matrix(unname(mat)))
+
+  x <- sample(seq_len(r), n, replace = TRUE)
+  y <- sample(seq_len(r), n, replace = TRUE)
+
+  return(all(abs(mat[cbind(x, y)] - mat[cbind(y, x)]) < sqrt(.Machine$double.eps)))
+}
+
 #Add ...names() for old versions of R; not in backports (yet)
 if (getRversion() < "4.1.0" && !exists("...names", envir = asNamespace("backports"), inherits = FALSE)) {
   ...names <- function() {
