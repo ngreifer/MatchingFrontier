@@ -74,8 +74,8 @@ getBins <- function(data, match.on, breaks = NULL){
   return(bin.list)
 }
 
-assignToBins <- function(data, match.on, bins.list, subset) {
-  if (missing(subset)) subset <- seq_len(nrow(data))
+assignToBins <- function(data, match.on, bins.list, subset = NULL) {
+  if (is.null(subset)) subset <- seq_len(nrow(data))
 
   data <- data[subset, match.on]
 
@@ -125,7 +125,8 @@ getBinsAtMedian <- function(data, match.on, treat.vec, metric){
   })
 
   Lstats <- vapply(bin.lists, function(b) {
-    strataholder <- assignToBins(data, match.on, b)
+    strata <- assignToBins(data, match.on, b)
+    strataholder <- lapply(unique(strata), function(s) which(strata == s))
     Lstat(get.diffs(strataholder, treat.vec, num.treated, num.control))
   }, numeric(1L))
 
