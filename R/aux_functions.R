@@ -57,11 +57,11 @@ add_quotes <- function(x, quotes = 2) {
 
 #More informative and cleaner version of base::match.arg. From MatchIt.
 match_arg <- function(arg, choices, several.ok = FALSE) {
-  #Replaces match_arg() but gives cleaner error message and processing
+  #Replaces match.arg() but gives cleaner error message and processing
   #of arg.
   if (missing(arg))
-    stop("No argument was supplied to match_arg.", call. = FALSE)
-  arg.name <- paste(deparse(substitute(arg), width.cutoff = 500L), collapse = " ")
+    stop("No argument was supplied to `match_arg()`.", call. = FALSE)
+  arg.name <- deparse1(substitute(arg), width.cutoff = 500L)
 
   if (missing(choices)) {
     formal.args <- formals(sys.function(sysP <- sys.parent()))
@@ -72,24 +72,25 @@ match_arg <- function(arg, choices, several.ok = FALSE) {
   if (is.null(arg))
     return(choices[1L])
   else if (!is.character(arg))
-    stop(paste0("The argument to '", arg.name, "' must be NULL or a character vector"), call. = FALSE)
+    stop(sprintf("The argument to '%s' must be NULL or a character vector", arg.name), call. = FALSE)
   if (!several.ok) {
     if (identical(arg, choices))
       return(arg[1L])
     if (length(arg) > 1L)
-      stop(paste0("The argument to '", arg.name, "' must be of length 1"), call. = FALSE)
+      stop(sprintf("The argument to '%s' must be of length 1", arg.name), call. = FALSE)
   }
   else if (length(arg) == 0)
-    stop(paste0("The argument to '", arg.name, "' must be of length >= 1"), call. = FALSE)
+    stop(sprintf("The argument to '%s' must be of length >= 1", arg.name), call. = FALSE)
 
   i <- pmatch(arg, choices, nomatch = 0L, duplicates.ok = TRUE)
   if (all(i == 0L))
-    stop(paste0("The argument to '", arg.name, "' should be ", if (length(choices) > 1) {if (several.ok) "at least one of " else "one of "} else "",
-                word_list(choices, and.or = "or", quotes = 2), "."),
+    stop(sprintf("The argument to '%s' should be %s %s.",
+                 arg.name, ngettext(length(choices), "", if (several.ok) "at least one of " else "one of "),
+                 word_list(choices, and.or = "or", quotes = 2)),
          call. = FALSE)
   i <- i[i > 0L]
   if (!several.ok && length(i) > 1)
-    stop("There is more than one match in 'match_arg'")
+    stop("There is more than one match in `match_arg`")
   choices[i]
 }
 
