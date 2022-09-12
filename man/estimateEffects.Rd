@@ -24,6 +24,7 @@ estimateEffects(frontier.object,
                 seed = NULL,
                 alpha = 0.05,
                 verbose = TRUE,
+                cl = NULL,
                 ...)
 
 \method{print}{frontierEstimates}(x, ...)
@@ -56,6 +57,9 @@ the alpha value used to select the critical test statistic used in computing con
 }
   \item{verbose}{
 \code{logical}; whether to print additional information about the process of estimating effects and sensitivity bounds (if requested). A progress bar will be displayed if \code{TRUE}.
+}
+  \item{cl}{
+a cluster object created by \code{parallel::makeCluster()}, or an integer to indicate number of child-processes (integer values are ignored on Windows) for parallel evaluations. See \pkgfun{pbapply}{pblapply} for details.
 }
   \item{x}{
 a \code{frontierEstimates} object; the output of a call to \code{estimateEffects()}.

@@ -25,7 +25,7 @@ energyToFrontierSATT <- function(distance.mat, treat.vec, verbose, ratio = NA) {
   N0 <- N0_ <- length(control.ind)
 
   if (verbose) {
-    pb <- txtProgressBar(min = 0, max = N0, style = 3)
+    pb <- pbapply::startpb(min = 0, max = N0)
   }
 
   d10 <- distance.mat[treated.ind, control.ind, drop = FALSE]
@@ -66,7 +66,7 @@ energyToFrontierSATT <- function(distance.mat, treat.vec, verbose, ratio = NA) {
     if (N0-1 <= 0) break
 
     if (verbose) {
-      setTxtProgressBar(pb, N0_ - N0)
+      pbapply::setpb(pb, N0_ - N0)
     }
 
     #Compute new edist with dropped units removed
@@ -107,8 +107,8 @@ energyToFrontierSATT <- function(distance.mat, treat.vec, verbose, ratio = NA) {
   Xs <- cumsum(lengths(drop.order))
 
   if (verbose) {
-    setTxtProgressBar(pb, N0_)
-    close(pb)
+    pbapply::setpb(pb, N0_)
+    pbapply::closepb(pb)
   }
 
   return(list(drop.order = drop.order, Xs = Xs, Ys = Ys, Y.origin = Ys[1]))

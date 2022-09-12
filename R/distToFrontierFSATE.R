@@ -10,7 +10,7 @@ distToFrontierFSATE <- function(distance.mat, treat.vec, verbose, ratio = NULL){
   inds0 <- seq_along(control.ind)
 
   if (verbose) {
-    pb <- txtProgressBar(min = 0, max = N, style = 3)
+    pb <- pbapply::startpb(min = 0, max = N)
   }
 
   if (is.null(ratio)) ratio <- 1
@@ -73,8 +73,8 @@ distToFrontierFSATE <- function(distance.mat, treat.vec, verbose, ratio = NULL){
   drop.order[empty] <- NULL
 
   if (verbose) {
-    setTxtProgressBar(pb, N)
-    close(pb)
+    pbapply::setpb(pb, N)
+    pbapply::closepb(pb)
   }
 
   # Checks to confirm monotonically decreasing. Since

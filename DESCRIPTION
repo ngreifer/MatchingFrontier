@@ -26,7 +26,8 @@ Imports:
     scales (>= 1.1.1),
     lmtest (>= 0.9-38),
     sandwich (>= 3.0-1),
-    backports (>= 1.4.1)
+    backports (>= 1.4.1),
+    pbapply
 Suggests: 
     segmented (>= 1.3-4),
     knitr,

@@ -15,7 +15,7 @@ binsToFrontierFSATE <- function(strata, treat.vec, metric = "l1", verbose, ratio
   }
 
   if (verbose) {
-    pb <- txtProgressBar(min = 0, max = N, style = 3)
+    pb <- pbapply::startpb(min = 0, max = N)
   }
 
   strataholder <- lapply(unique(strata), function(s) which(strata == s))
@@ -95,7 +95,7 @@ binsToFrontierFSATE <- function(strata, treat.vec, metric = "l1", verbose, ratio
     if (N1 == 1 || N0 == 1) break
 
     if (verbose) {
-      setTxtProgressBar(pb, N - (N0 + N1))
+      pbapply::setpb(pb, N - (N0 + N1))
     }
 
     if (new.Lstat < min.Lstat) min.Lstat <- new.Lstat
@@ -114,8 +114,8 @@ binsToFrontierFSATE <- function(strata, treat.vec, metric = "l1", verbose, ratio
   Xs <- cumsum(lengths(drop.order))
 
   if (verbose) {
-    setTxtProgressBar(pb, N)
-    close(pb)
+    pbapply::setpb(pb, N)
+    pbapply::closepb(pb)
   }
 
   return(list(drop.order = drop.order, Xs = Xs, Ys = Ys, Y.origin = Ys[1]))
