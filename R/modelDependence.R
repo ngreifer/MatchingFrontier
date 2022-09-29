@@ -161,7 +161,7 @@ modelDependenceInternal <- function(data,
       return(est["Estimate"])
     }, numeric(1L))
 
-    out <- quantile(coef.dist, c(.025, .975))
+    out <- quantile(coef.dist, c(.05, .95))
     attr(out, "specifications") <- lapply(specifications, function(s) {
       if (is.call(s)) deparse1(s) else s
     })
