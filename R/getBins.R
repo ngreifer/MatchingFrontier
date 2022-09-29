@@ -95,7 +95,7 @@ get.diffs <- function(strataholder, treat.vec, num.treated, num.control){
     sum(treat.vec[x] == 0) / num.control - sum(treat.vec[x] == 1) / num.treated))
 }
 
-getBinsAtMedian <- function(data, match.on, treat.vec, metric){
+getBinsAtMedian <- function(data, match.on, treat.vec, metric, verbose = TRUE){
   if (startsWith(metric, "l1")) {
     Lstat <- function(diffs) .5*sum(abs(diffs))
   }
@@ -124,11 +124,14 @@ getBinsAtMedian <- function(data, match.on, treat.vec, metric){
     getBins(data, match.on, breaks)
   })
 
-  Lstats <- vapply(bin.lists, function(b) {
+  opb <- pbapply::pboptions(type = if (verbose) "timer" else "none")
+  on.exit(pbapply::pboptions(opb))
+
+  Lstats <- unlist(pbapply::pblapply(bin.lists, function(b) {
     strata <- assignToBins(data, match.on, b)
     strataholder <- lapply(unique(strata), function(s) which(strata == s))
     Lstat(get.diffs(strataholder, treat.vec, num.treated, num.control))
-  }, numeric(1L))
+  }))
 
   Lstat.med <- sort(Lstats, partial = ceiling(n.coarsenings/2))[ceiling(n.coarsenings/2)]
 
