@@ -61,7 +61,6 @@ makeFrontier.formula <- function(formula, data, QOI = 'FSATT',
 makeFrontier_internal <- function(data, treatment, match.on, formula, QOI = 'FSATT',
                                   metric, call = NULL, ratio = NULL, verbose = FALSE) {
 
-
   frontier <- switch(attr(metric, "type"),
                      "dist" = DistFrontier(treatment = treatment,
                                            data = data,
