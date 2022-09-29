@@ -102,7 +102,7 @@ set.seed(97531)
 e.out <- estimateEffects(f.out, outcome = "polknow",
                          Ndrop = c(0, 1250),
                          method = "extreme-bounds",
-                         cl = 4, verbose = FALSE)
+                         verbose = FALSE)
 e.out
 ```
 
