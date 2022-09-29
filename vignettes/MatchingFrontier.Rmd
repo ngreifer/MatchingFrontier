@@ -227,7 +227,7 @@ The returned dataset contains only the matched units for use in estimating treat
 
 We can use regression to estimate the treatment effect in the matched sample. See `vignette("estimating-effects", package = "MatchIt")` for more details on estimating treatment effects after matching with replacement. Here we use a linear regression adjusting for the matched covariates. We must include use the matching weights in the regression and use robust standard errors to account for the weights [@hill2006].
 
-```{r,warn=F}
+```{r, warn=F, eval=requireNamespace("lmtest", quietly = TRUE)}
 library("lmtest")
 library("sandwich")
 
@@ -340,7 +340,7 @@ energy.matched.data <- generateDataset(energy.frontier, N = 37)
 
 Below, we estimate the SATT using regression as we did before (note the weights are unnecessary here but it's good practice to use them):
 
-```{r}
+```{r, eval=requireNamespace("lmtest", quietly = TRUE)}
 # library("lmtest") #already loaded
 # library("sandwich")
 

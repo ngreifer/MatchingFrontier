@@ -295,7 +295,7 @@ safe_ci <- function(fit, treatment, vcov. = sandwich::vcovHC, type = "HC3", alph
   while (type != "const") {
 
     if (is.finite(v[treatment, treatment])) {
-      return(lmtest::coefci(fit, treatment, vcov. = v, level = 1 - alpha))
+      return(get.ci(fit, treatment, alpha, v))
     }
 
     type <- switch(type,
@@ -310,7 +310,37 @@ safe_ci <- function(fit, treatment, vcov. = sandwich::vcovHC, type = "HC3", alph
     v <- vcov.(fit, type = type, ...)
   }
 
-  lmtest::coefci(fit, treatment, vcov. = v, level = 1 - alpha)
+  get.ci(fit, treatment, alpha, v)
+}
+
+#Port of lmtest::coef.ci() but simplified
+get.ci <- function(fit, par, alpha = 0.05, vcov) {
+  est <- coef(fit)
+  se <- sqrt(diag(vcov))
+
+  if (!is.null(names(est)) && !is.null(names(se))) {
+    anames <- names(est)[names(est) %in% names(se)]
+    est <- est[anames]
+    se <- se[anames]
+  }
+
+  a <- c(alpha/2, 1 - alpha/2)
+
+  df <- try(df.residual(fit), silent = TRUE)
+  if (inherits(df, "try-error")) df <- NULL
+
+  if (is.null(df)) df <- 0
+  fac <- {
+    if (any(is.finite(df)) && all(df > 0)) qt(a, df = df)
+    else qnorm(a)
+  }
+  ci <- cbind(est + fac[1] * se, est + fac[2] * se)
+  colnames(ci) <- paste(format(100 * a, trim = TRUE, scientific = FALSE,
+                               digits = 3L), "%")
+
+  ci <- ci[names(est) %in% par, , drop = FALSE]
+
+  return(ci)
 }
 
 #Check if matrix is symmatric, using stochastic sampling if matrix is too big in
@@ -324,6 +354,7 @@ check_symmetric <- function(mat, use.random.at = 2000, n = 50000) {
 
   return(all(abs(mat[cbind(x, y)] - mat[cbind(y, x)]) < sqrt(.Machine$double.eps)))
 }
+
 
 #Add ...names() for old versions of R; not in backports (yet)
 if (getRversion() < "4.1.0" && !exists("...names", envir = asNamespace("backports"), inherits = FALSE)) {

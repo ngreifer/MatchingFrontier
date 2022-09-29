@@ -24,11 +24,11 @@ Imports:
     MatchIt (>= 4.4.0),
     ggplot2 (>= 3.3.5),
     scales (>= 1.1.1),
-    lmtest (>= 0.9-38),
     sandwich (>= 3.0-1),
     backports (>= 1.4.1),
     pbapply
 Suggests: 
+    lmtest (>= 0.9-38),
     segmented (>= 1.3-4),
     knitr,
     rmarkdown
