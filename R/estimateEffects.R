@@ -217,13 +217,13 @@ estimateEffects <- function(frontier.object,
     mod.dependence.un <- res[[1]][4:5]
   }
 
-  coefs <- unlist(lapply(res, `[`, 1))
-  CIs <- lapply(res, `[`, 2:3)
+  coefs <- unlist(lapply(res[-1], `[`, 1))
+  CIs <- lapply(res[-1], `[`, 2:3)
   attr(CIs, "CIlevel") <- 1 - alpha
 
   mod.dependence <- NULL
   if (method != "none") {
-    mod.dependence <- lapply(res, `[`, 4:5)
+    mod.dependence <- lapply(res[-1], `[`, 4:5)
   }
 
   if (verbose) {
