@@ -12,7 +12,7 @@ makeFrontier.matchit <- function(x, metric = 'dist',
                 customStop("makeFrontier() can only be used on matchit objects for which the specified estimand is the ATT or ATE.", "makeFrontier()"))
 
   # Check the frontier arguments
-  processed_metric <- processMetric(metric)
+  processed_metric <- processMetric(metric, breaks, distance.mat)
 
   checkArgs.matchit(QOI = QOI, metric = processed_metric, matchit = x, ...)
 
@@ -59,10 +59,10 @@ makeFrontier.matchit <- function(x, metric = 'dist',
     distance = distance,
     call = call,
     n = switch(QOI,
-               "SATE" = nrow(data),
-               "FSATE" = nrow(data),
-               "SATT" = sum(x[["treat"]] == 0),
-               "FSATT" = sum(x[["treat"]] == 1))
+               # "SATE" =,
+               "FSATE" = sum(x[["weights"]] > 0),
+               # "SATT" = sum(x[["treat"]] == 0 & x[["weights"]] > 0),
+               "FSATT" = sum(x[["treat"]] == 1 & x[["weights"]] > 0))
   )
 
   class(out) <- c("MatchItFrontier", "matchFrontier")
@@ -240,7 +240,7 @@ matchitToFrontierFSATT <- function(distance, matched, matched.to, metric, treat.
   inds <- seq_len(length(matched))[-(1:10)]
 
   if (verbose) {
-    pb <- txtProgressBar(min = 0, max = length(inds), style = 3)
+    pb <- pbapply::startpb(min = 0, max = length(inds))
   }
 
 
@@ -278,7 +278,7 @@ matchitToFrontierFSATT <- function(distance, matched, matched.to, metric, treat.
     for (i in seq_along(Ys)[-1]) {
       Ys[i] <- Ys[i-1] - sum(imbalance.distances.full[drop.order[[i]]])
       if (verbose) {
-        setTxtProgressBar(pb, Xs[i])
+        pbapply::setpb(pb, Xs[i])
       }
     }
     Ys <- Ys / (Nm_ - Xs)
@@ -317,7 +317,7 @@ matchitToFrontierFSATT <- function(distance, matched, matched.to, metric, treat.
       Nm <- Nm_ - Xs[i]
 
       if (verbose) {
-        setTxtProgressBar(pb, Xs[i])
+        pbapply::setpb(pb, Xs[i])
       }
 
       diffs <- get.diffs(strataholder, treat.vec, Nm, Nm)
@@ -368,7 +368,7 @@ matchitToFrontierFSATT <- function(distance, matched, matched.to, metric, treat.
       Nm <- length(treated.ind.matched)
 
       if (verbose) {
-        setTxtProgressBar(pb, Xs[i])
+        pbapply::setpb(pb, Xs[i])
       }
 
       #Compute new edist with dropped units removed
@@ -387,8 +387,8 @@ matchitToFrontierFSATT <- function(distance, matched, matched.to, metric, treat.
   }
 
   if (verbose) {
-    setTxtProgressBar(pb, Nm_)
-    close(pb)
+    pbapply::setpb(pb, Nm_)
+    pbapply::closepb(pb)
   }
 
   return(list(drop.order = drop.order, Xs = Xs, Ys = Ys, matched.to = matched.to,
@@ -402,6 +402,9 @@ checkArgs.matchit <- function(QOI, metric, matchit, outcome = NULL, ...){
   }
   if (is.null(matchit$distance) && isTRUE(matchit$info$distance_is_matrix)) {
     customStop("the distance measure used to match cannot have been supplied to matchit() as a matrix.", 'makeFrontier()')
+  }
+  if (is.null(matchit$distance) && is.null(matchit$info$transform)) {
+    customStop("a frontier can only be computed with a matchit object after pair matching on a distance.", 'makeFrontier()')
   }
   if (is.null(matchit$match.matrix) || !is.matrix(matchit$match.matrix) || ncol(matchit$match.matrix) != 1) {
     customStop("a frontier can only be computed with a matchit object after 1:1 pair matching.", 'makeFrontier()')
