@@ -132,7 +132,7 @@ MatchItFrontier <- function(treatment, data, formula, metric, QOI,
     if (verbose) cat("Computing bins...\n")
 
     if (is.character(breaks) && identical(tolower(breaks), "median")) {
-      bins.list <- getBinsAtMedian(data, match.on, treat, metric)
+      bins.list <- getBinsAtMedian(data, match.on, treat, metric, verbose)
     }
     else {
       bins.list <- getBins(data, match.on, breaks)

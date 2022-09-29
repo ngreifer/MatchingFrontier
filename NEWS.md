@@ -11,11 +11,11 @@ output:
 
 See the version 4.0.0 updates below in addition to the ones here for a full description of the updates to `MatchingFrontier` since it was removed from CRAN.
 
-* Frontiers can now be created for `matchit` objects after 1:1 matching using `MatchIt::matchit()`. This drops one pair of units at a time and considers how the chosen imbalance metric changes as the additional units are dropped, in particular to examine the propensity score paradox described by King and Nielsen (2019). The frontier can be viewed either as the number of pairs dropped/retained or the size of the caliper on the propensity score that yields the corresponding matched sample. See `help("makeFrontier.matchit")` for details.
+* Frontiers can now be created for `matchit` objects after 1:1 matching using `MatchIt::matchit()`. This drops one pair of units at a time and considers how the chosen imbalance metric changes as the additional units are dropped, in particular to examine the propensity score paradox described by King and Nielsen (2019). The frontier can be viewed either as the number of pairs dropped/retained or the size of the caliper on the propensity score that yields the corresponding matched sample. See `help("makeFrontier.matchit")` for details. Using the capability is demonstrated in the new vignette (`vignette("psm-paradox")`).
 
-* The `metric` argument to `makeFrontier()` has been simplified; the allowable options are now `"dist"` (which replaces `"mahal"`, `"euclid"`, and `"custom"`), `"L1"` or `"L2"`, and `"energy"`. Using `metric = "dist"` now involves specifying the name of a distance matrix to the `distance.mat` argument to determine the distances used (see below). To request that bins are created using the "median" algorithm previously requested by setting `metric = "L1median"` or `"L2median"`, the `breaks` argument can be set to `"median"`.
+* The `metric` argument to `makeFrontier()` has been simplified; the allowable options are now `"dist"` (which replaces `"mahal"`, `"euclid"`, and `"custom"`), `"l1"` or `"l2"`, and `"energy"`. Using `metric = "dist"` now involves specifying the name of a distance matrix to the `distance.mat` argument to determine the distances used (see below). To request that bins are created using the "median" algorithm previously requested by setting `metric = "L1median"` or `"L2median"`, the `breaks` argument can be set to `"median"`. Old arguments can still be used.
 
-* Different distance matrices can be used with `metric = "dist"` and `metric = "energy"` by supplying an argument to `distance.mat` naming the distance matrix to be used. Allowable options include `"mahalanobis"` for the Mahalanobis distance (the default with `metric = "dist"`), `"scaled_euclidean"` for the Euclidean distance computed using the standardized covariates (the default with `metric = "energy"`), and `"euclidean"` for the Euclidean distance computed using the raw covariates. These are computed using the corresponding functions in `MatchIt`, which speeds up computations.
+* Different distance matrices can be used with `metric = "dist"` and `metric = "energy"` by supplying an argument to `distance.mat` naming the distance matrix to be used. Allowable options include `"mahalanobis"` for the Mahalanobis distance (the default with `metric = "dist"`), `"scaled_euclidean"` for the Euclidean distance computed using the standardized covariates (the default with `metric = "energy"`), and `"euclidean"` for the Euclidean distance computed using the raw covariates. These are computed using the corresponding functions in `MatchIt` (e.g., `MatchIt::mahalanobis_dist()`), which speeds up computations.
 
 * Added the `ratio` argument to `makeFrontier()` (which has a different meaning from version prior to 4.0.0). For bin- and energy distance-based frontiers, when the QOI is the FSATE or SATE, setting this argument to a number ensures that only units from the larger of the two treatment groups are dropped until the groups size are in a ratio equal to the value supplied, at which point they are kept at that ratio as additional units are dropped. This ensures one group does not get too small. For pair distance-based frontiers, this corresponds to the matching ratio $k$ in $k:1$ matching.
 
@@ -24,6 +24,14 @@ See the version 4.0.0 updates below in addition to the ones here for a full desc
 * Added a new `axis` argument to `plot.matchFrontier()` to select whether the x-axis should correspond to the number of units dropped, the number of units remaining, or the size of corresponding caliper (for `MatchItFrontier` objects with a propensity score).
 
 * The effective sample size (ESS) can now be view using `plot.matchFrontier()`.
+
+* Progress bars are now created using functions in `pbapply()`.
+
+* Parallel processing is available when using `estimateEffects()` to speed up computation; see the `cl` argument.
+
+* Add a progress bar for `makeFrontier()` with a bin-based frontier when `breaks = "median"`.
+
+* Added a new dataset, `finkel2012`, which is used in `vignette("psm-paradox")`. See `help("finkel2012")` for details on the dataset and its origin.
 
 * Fixed a bug where zooming in on a frontier plot using `coord_cartesian()` would cause the axis labels to vanish.
 
@@ -35,7 +43,7 @@ See the version 4.0.0 updates below in addition to the ones here for a full desc
 
 # MatchingFrontier 4.0.0
 
-`MatchingFrontier` has been completely rewritten from scratch, providing more consistent syntax, new methods for constructing the frontier, and many other new features. All of these are breaking changes, meaning you should not expect result to agree with those from version 3.0.0 or below, and syntax from earlier versions may not work with this version. To install an older version of `MatchingFrontier` (e.g., to reproduce the results of an older analysis), you can install an archived version from CRAN. Here, we describe some of the changes made to the package and its functionality.
+`MatchingFrontier` has been completely rewritten from scratch, providing more consistent syntax, new methods for constructing the frontier, and many other new features. All of these are breaking changes, meaning you should not expect result to agree with those from version 3.0.0 or below, and syntax from earlier versions may not work with this version. To install an older version of `MatchingFrontier` (e.g., to reproduce the results of an older analysis), you can install an archived version from CRAN. Here, we describe some of the changes made to the package and its functionality. Note that some of these changes have already been superseded in version 4.1.0; see those changes above.
 
 ### Constructing the frontier
 
@@ -51,7 +59,7 @@ See the version 4.0.0 updates below in addition to the ones here for a full desc
 
 * The `ratio` argument is now defunct and has been removed (but returns in version 4.1.0 with a new meaning).
 
-* The arguments now be specified either as a dataset and strings for the matching covariates and treatment (as in prior versions) or as a formula and dataset.
+* The arguments to `makeFrontier()` now can be specified either as a dataset and strings for the matching covariates and treatment (as in prior versions) or as a formula and dataset; the latter is used in most examples.
 
 * A `verbose` argument has been added to control printing of results.
 
@@ -93,7 +101,7 @@ The `modelDependence()` function for assessing model dependence in a single data
 
 * The output is now always a pair of mode dependence bounds; previously, it would return a pair of values for the extreme bounds procedure and a single value for the Athey-Imbens procedure.
 
-* When using the extreme bounds procedure, the 2.5th and 97.5th percentiles of the resulting distribution of effect estimates are returned rather than the minimum and maximum in order to encourage the use of larger number of model specifications.
+* When using the extreme bounds procedure, the 5th and 95th percentiles of the resulting distribution of effect estimates are returned rather than the minimum and maximum in order to encourage the use of larger number of model specifications.
 
 * A new `plot()` method can be used to visualize the resulting model dependence estimates.
 
