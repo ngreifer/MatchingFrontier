@@ -95,7 +95,7 @@ These frontiers can be used when the QOI is the SATE, FSATE, or SATT. For the SA
 }
 
 \subsection{Quantities of interest (QOIs)}{
-The \code{QOI} argument can be set to control the estimand, i.e., the group to which the effect is meant to generalize. The sample average treatment treatment effect (SATE) is the average effect of treatment in the entire sample. The feasible sample average treatment effect (FSATE) is the average effect of treatment in the sample remaining after units form both groups are dropped. The sample average treatment effect in the treated (SATT) is the average effect of treatment in the sample of those who were treated. The feasible sample average treatment effect in the treated (FSATT) is the average effect of treatment in the sample of treated units after some treated units are dropped.
+The \code{QOI} argument can be set to control the estimand, i.e., the group to which the effect is meant to generalize. The sample average treatment treatment effect (SATE) is the average effect of treatment in the entire sample. The feasible sample average treatment effect (FSATE) is the average effect of treatment in the sample remaining after units form both groups are dropped. The sample average treatment effect in the treated (SATT) is the average effect of treatment in the sample of those who were treated. The feasible sample average treatment effect in the treated (FSATT) is the average effect of treatment in the sample of treated units after some treated units are dropped. This information is used in creating the frontier and in subsetting the sample used to estimate the treatment effects when using \fun{estimateEffects}.
 }
 }
 

@@ -27,6 +27,11 @@ knitr::opts_chunk$set(
 
 `MatchingFrontier` implements the methods described in King, Lucas, and Nielsen (2017) for exploring the balance-sample size frontier in observational studies, a function the relates the size of a matched subset to the covariate balance attained. Included are function to create the frontier, visualize it, and estimate treatment effects along it. In addition, functions are included to export a matched dataset at a single point on the frontier and assess model dependence for a single treatment effect estimate. `MatchingFrontier` interfaces with `MatchIt` to provide additional tools for assessing balance in matched datasets and estimating effects after matching.
 
+To install `MatchingFrontier`, run
+```{r, eval = F}
+remotes::install_github("iqss/MatchingFrontier")
+```
+
 Below is an example of using the `MatchingFrontier` to examine the balance-sample size frontier for the effect of a job training program on earnings. See `vignette("MatchingFrontier")` for more information on the setup and a more detailed exposition.
 
 ```{r}

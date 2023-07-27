@@ -10,13 +10,20 @@ Compute Model Dependence Bounds
 \code{modelDependence()} computes model dependence bounds for a single dataset using either the extreme bounds procedure or Athey-Imbens procedure. The width of the bounds indicates the degree of model dependence present in the dataset. Wide bounds imply that treatment effects could vary greatly depending on the outcome model used and therefore depend heavily on it.
 }
 \usage{
-modelDependence(base.form = NULL, data, treatment,
-                outcome, covariates, weights = NULL,
+modelDependence(base.form = NULL,
+                data,
+                treatment,
+                outcome,
+                covariates,
+                weights = NULL,
                 method = c("extreme-bounds", "athey-imbens"),
                 model.dependence.ests = 101,
-                specifications = NULL, cutpoints = NULL,
+                specifications = NULL,
+                cutpoints = NULL,
                 cutpoint.method = c("mean", "median", "segmented"),
-                verbose = TRUE, seed = NULL)
+                QOI = "FSATT",
+                verbose = TRUE,
+                seed = NULL)
 
 \method{plot}{modelDependenceBounds}(x, ...)
 
@@ -55,6 +62,9 @@ when \code{method = "athey-imbens"}, a named list of the cutpoints for each cova
 }
   \item{cutpoint.method}{
 when \code{method = "athey-imbens"}, the name of the method to create cutpoints for covariates without entries in \code{cutpoints}. Options include \code{"mean"} (the default) to use the covariate mean as the cutpoint, \code{"median"} to use the covariate median as the cutpoint, and \code{"segmented"} to estimate the cutpoints with segmented (piecewise) regression. Abbreviations allowed.
+}
+  \item{QOI}{
+the quantity of interest (i.e., estimand); allowable options include \code{'SATE'}, \code{'FSATE'}, \code{'SATT'}, and \code{'FSATT'}. See \fun{makeFrontier}. Default is \code{'FSATT'}. This affects for whom treatment effects are estmated.
 }
   \item{verbose}{
 \code{logical}; whether to print additional information about the procedure.

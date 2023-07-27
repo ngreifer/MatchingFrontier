@@ -20,6 +20,12 @@ treatment effect estimate. `MatchingFrontier` interfaces with `MatchIt`
 to provide additional tools for assessing balance in matched datasets
 and estimating effects after matching.
 
+To install `MatchingFrontier`, run
+
+``` r
+remotes::install_github("iqss/MatchingFrontier")
+```
+
 Below is an example of using the `MatchingFrontier` to examine the
 balance-sample size frontier for the effect of a job training program on
 earnings. See `vignette("MatchingFrontier")` for more information on the
@@ -44,7 +50,7 @@ mahal.frontier
     #> - imbalance metric: average pairwise distance
     #> - treatment: treat
     #> - covariates: age, educ, race, married, nodegree, re74, re75
-    #> - number of points: 154
+    #> - number of points: 152
 
 Plotting the frontier provides a clear picture of the relationship
 between the number of units pruned in the matching and the remaining
@@ -54,7 +60,7 @@ imbalance as measured by the average Mahalanobis imbalance.
 plot(mahal.frontier)
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" style="display: block; margin: auto;" />
+<img src="man/figures/README-unnamed-chunk-4-1.png" style="display: block; margin: auto;" />
 
 We can then estimate effects along the frontier.
 
@@ -68,7 +74,7 @@ mahal.estimates
     #> A frontierEstimates object
     #> - quantity of interest: FSATT
     #> - model sensitivity method: none
-    #> - number of estimates: 149
+    #> - number of estimates: 152
     #> - treatment: treat
     #> - covariates: age, educ, race, married, nodegree, re74, re75
     #> - outcome model: re78 ~ treat
@@ -79,7 +85,7 @@ Finally, we can plot the estimates and their confidence intervals.
 plot(mahal.estimates)
 ```
 
-<img src="man/figures/README-unnamed-chunk-5-1.png" style="display: block; margin: auto;" />
+<img src="man/figures/README-unnamed-chunk-6-1.png" style="display: block; margin: auto;" />
 
 Other tools include `generateDataset()` and `frontier_to_matchit()` for
 extracting a matched dataset at one point on the frontier and

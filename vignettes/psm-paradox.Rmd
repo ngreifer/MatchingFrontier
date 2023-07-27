@@ -12,6 +12,7 @@ vignette: |
 bibliography: references.bib
 link-citations: true
 ---
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE,
                       fig.width=7, fig.height=5)
@@ -35,7 +36,7 @@ The propensity score matching (PSM) paradox is feature of PSM highlighted in @ki
 
 > ...[A]fter PSM's goal of complete randomization has been approximated [...], pruning the observations with the worst matched observations, according to the absolute propensity score distance in treated and control pairs, will increase imbalance, model dependence, and bias; this will also be true when pruning the pair with the next largest distance, and so on.
 
-The reason this is so pernicious is that the point of PSM is to decrease imbalance, and applying a caliper to the propensity score to ensure matches are close can have the opposite effect of making balance worse. That is, by restricting the matches so that only the closest pairs remain, balance can be worse than were the far apart pairs to remain. This is a feature other matching methods do not share with PSM (at least not to the same degree), which is why KN19 argue PSM is suboptimal and other methods, like Mahalanobis distance matching or coarsened exact matching, should be used instead.
+The reason this is so pernicious is that the point of PSM is to decrease imbalance, and applying a caliper to the propensity score to ensure matches are close can have the opposite effect of making balance worse. That is, by restricting the matches so that only the closest pairs remain, balance can be worse than were the far apart pairs to remain. This is a feature some other matching methods do not share with PSM (at least not to the same degree), which is why KN19 argue PSM is suboptimal and other methods, like Mahalanobis distance matching or coarsened exact matching, might be used instead.
 
 ## The PSM Paradox and `MatchingFrontier`
 
@@ -57,7 +58,7 @@ data("finkel2012")
 head(finkel2012)
 ```
 
-First, we'll use `MatchIt::matchit()` to perform propensity score matching. This analysis can only be done using `MatchingFrontier` after 1:1 matching with or without replacement. This matching does not have to involve a propensity score, but because we are investigating the PSM paradox, we perform 1:1 PSM (here, without replacement, as is most common).
+First, we'll use `MatchIt::matchit()` to perform propensity score matching. This analysis can only be done using `MatchingFrontier` after 1:1 matching with or without replacement. This matching does not have to involve a propensity score, but because we are investigating the PSM paradox, we perform 1:1 PSM (here, without replacement, as is most common) on the logit of the propensity score. It is advisable to perform the matching in order of closeness, so we set `m.order = "closest"` to guarantee that the closest pairs are matched first (and therefore remain as we further prune units).
 
 ```{r}
 treat_formula <- treat ~ uraiamedia + age + churchgo +
@@ -68,7 +69,9 @@ treat_formula <- treat ~ uraiamedia + age + churchgo +
 # 1:1 PS matching w/o replacement using a logistic regression
 # propensity score
 m.out <- MatchIt::matchit(treat_formula, data = finkel2012,
-                          method = "nearest")
+                          method = "nearest",
+                          m.order = "closest",
+                          link = "linear.logit")
 m.out
 ```
 
@@ -78,7 +81,9 @@ We can examine balance on the original matched sample using `summary()`:
 summary(m.out)
 ```
 
-Of note is that the sample prior to matching was well balanced already, meaning there is little advantage to discarding units by matching, and making this dataset ripe for the PSM paradox. By examining what happens when additional units are dropped, we can see the paradox in action. To do so, we call `makeFrontier()`, supplying a balance metric to use to track balance as additional units are dropped (in this case, the energy distance [@rizzo2016])^[To be precise, this is not really a frontier in that it does not represent the best balance possible for the given sample size; rather, it represents the balance corresponding to a sample with the closest pairs for a given sample size, conditional on having already formed the pairs. `makeFrontier()` is used here because it relies on the same technology used for making a true frontier, i.e., dropping units in a specific order and computing a global measure of balance for each sample of remaining units.].
+Of note is that the sample prior to matching was well balanced already, meaning there is little advantage to discarding units by matching, and making this dataset ripe for the PSM paradox. By examining what happens when additional units are dropped, we can see the paradox in action. To do so, we call `makeFrontier()`, supplying a balance metric to use to track balance as additional units are dropped (in this case, the energy distance [@rizzo2016])[^1].
+
+[^1]: To be precise, this is not really a frontier in that it does not represent the best balance possible for the given sample size; rather, it represents the balance corresponding to a sample with the closest pairs for a given sample size, conditional on having already formed the pairs. `makeFrontier()` is used here because it relies on the same technology used for making a true frontier, i.e., dropping units in a specific order and computing a global measure of balance for each sample of remaining units.
 
 ```{r}
 # Make a "frontier" by dropping the most distant pairs
@@ -89,11 +94,21 @@ f.out
 We can now plot the relationship between the number of units dropped and the resulting balance using `plot()`. (We zoom in on a part of the plot using `ggplot2::coord_cartesian()`.)
 
 ```{r}
-plot(f.out) + ggplot2::coord_cartesian(xlim = c(0, 1250),
-                                       ylim = c(0, .15))
+plot(f.out) +
+  ggplot2::coord_cartesian(xlim = c(0, 1250),
+                           ylim = c(0, .15))
 ```
 
 As more units are dropped, leaving only units that are the most closely matched on the propensity score, balance worsens, whereas one would naively expect balance to improve because the remaining units have closer values of the propensity score; this is the PSM paradox.
+
+When a propensity score is used for matching, we can change the x-axis to represent the size of an ever-shrinking caliper, which allows one to see how decreasing the caliper could induce the paradox. We can do so by setting `axis = "caliper"` in the call to `plot()`. The caliper is displayed in standard deviation units.
+
+```{r}
+plot(f.out, axis = "caliper") +
+  ggplot2::coord_cartesian(ylim = c(0, .1))
+```
+
+Here we can see that the paradox doesn't occur until the caliper is at a minuscule size; for common values of the caliper (e.g., .25), balance is still better than the original sample and has not increased. These results are consistent with those of @ripolloneImplicationsPropensityScore2018, who found that in some datasets, the PSM paradox does not occur at commonly used caliper values. That is, while dropping units may induce the PSM paradox, the calipers required to do so are unreasonably small and unlikely to be used in practice.
 
 We can also examine model dependence as additional units are dropped. The PSM paradox suggests that model dependence should increase as additional units are dropped, again, in contrast to the expectation that with only the most similar units remaining, the treatment effect estimate would depend less on the specific model used. We can use `estimateEffects()` to estimate treatment effects for each sample. We'll request the "extreme bounds" procedure to examine model dependence; this produces bounds representing the largest and smallest effect estimates across many different randomly selected model specifications that include some covariates and powers of them and omit others.
 
@@ -102,6 +117,7 @@ set.seed(97531)
 e.out <- estimateEffects(f.out, outcome = "polknow",
                          Ndrop = c(0, 1250),
                          method = "extreme-bounds",
+                         n.estimated = 100,
                          verbose = FALSE)
 e.out
 ```

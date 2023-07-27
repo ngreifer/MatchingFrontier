@@ -228,13 +228,17 @@ The returned dataset contains only the matched units for use in estimating treat
 We can use regression to estimate the treatment effect in the matched sample. See `vignette("estimating-effects", package = "MatchIt")` for more details on estimating treatment effects after matching with replacement. Here we use a linear regression adjusting for the matched covariates. We must include use the matching weights in the regression and use robust standard errors to account for the weights [@hill2006].
 
 ```{r, warn=F, eval=requireNamespace("lmtest", quietly = TRUE)}
-library("lmtest")
-library("sandwich")
+library("marginaleffects")
 
 fit <- lm(re78 ~ treat + age + educ + race + married +
             nodegree + re74 + re75,
           data = mahal.matched.data, weights = weights)
-coeftest(fit, vcov. = vcovHC)["treat",, drop = FALSE]
+
+# G-computation
+avg_comparisons(fit, variables = "treat",
+                newdata = subset(mahal.matched.data, treat == 1),
+                vcov = "HC3",
+                wts = "weights")
 ```
 
 We chose a specific outcome model, but we could have chosen others, e.g., by including powers of covariates or interactions between them. We can assess how dependent on our choice of model our results are using the `modelDependence()` function in `MatchingFrontier`. The output of `modelDependence()` is a pair of bounds representing the treatment effects possible from specifying many possible models. Narrow bounds indicate that our results are not sensitive to our choice of model, which is a good thing because it implies our conclusions are not simply the result of fishing for a desired outcome. See also the `ExtremeBounds` package [@hlavac2016], which provides greater functionality focused on variable selection.
@@ -280,7 +284,7 @@ Next, we can plot the estimates across the frontier using `plot.frontierEstimate
 plot(mahal.estimates, band = "model-dependence")
 ```
 
-We can see that model dependence varies along the frontier, and markedly increases once 120 treated units are dropped. However, at the last point of the frontier, where the groups are perfectly balanced, model dependence drops to zero. Next, we can plot confidence bands along the frontier.
+We can see that model dependence varies along the frontier. Note that these bands may be unstable, especially when the remaining sample size gets low relative to the number of covariates in the model. Next, we can plot confidence bands along the frontier.
 
 ```{r}
 plot(mahal.estimates, band = "confidence")
@@ -341,13 +345,16 @@ energy.matched.data <- generateDataset(energy.frontier, N = 37)
 Below, we estimate the SATT using regression as we did before (note the weights are unnecessary here but it's good practice to use them):
 
 ```{r, eval=requireNamespace("lmtest", quietly = TRUE)}
-# library("lmtest") #already loaded
-# library("sandwich")
+# library("marginaleffects") #already loaded
 
 fit <- lm(re78 ~ treat + age + educ + race + married + 
             nodegree + re74 + re75,
           data = energy.matched.data, weights = weights)
-coeftest(fit, vcov. = vcovHC)["treat",, drop = FALSE]
+
+avg_comparisons(fit, variables = "treat",
+                newdata = subset(energy.matched.data, treat == 1),
+                vcov = "HC3",
+                wts = "weights")
 ```
 
 We can assess model dependence using `modelDependence()`. Because we are not using a pair distance-based frontier, we can use the Athey-Imbens model dependence procedure in addition to the extreme bounds procedure. We'll do so below.

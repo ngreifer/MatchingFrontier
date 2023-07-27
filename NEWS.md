@@ -7,6 +7,13 @@ output:
   `MatchingFrontier` News and Updates
 ======
 
+# MatchingFrontier (development version)
+
+* The treatment variable must now be a numeric variable only taking on values of 0 and 1 (where 1 is interpreted as the treated group).
+
+* `estimateEffects()` and `modelDependence()` now use g-computation to estimate treatment effects. This means treatment-covariate interactions can be included in `base.form` and logistic regression will be used when the outcome is binary. G-computation will respect the estimand, i.e., the effect will only be estimated for treated units when `QOI` is set to `"SATT"` or `"FSATT"`. For more information on g-computation, see `vignette("estimating-effects", package = "MatchIt")`.
+
+
 # MatchingFrontier 4.1.0
 
 See the version 4.0.0 updates below in addition to the ones here for a full description of the updates to `MatchingFrontier` since it was removed from CRAN.

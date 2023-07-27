@@ -130,7 +130,7 @@ plot(e1, band = "confidence")
 
 summary(e1, Ndrop = c(10, 85))
 
-# Only estimate effects for a subset of the forntier
+# Only estimate effects for a subset of the frontier
 # (points with remaining sample sizes between 50 and
 # 100)
 e2 <- estimateEffects(f1,
@@ -139,4 +139,13 @@ e2 <- estimateEffects(f1,
                       N = c(50, 100))
 e2
 plot(e2)
+
+# Estimate effects using logistic regression for a
+# binary outcome
+e3 <- estimateEffects(f1,
+                      base.form = I(re78 > 0) ~ treat * (age +
+                                    educ + married + re74),
+                      N = c(50, 100))
+e3
+plot(e3)
 }

@@ -1,5 +1,5 @@
 Package: MatchingFrontier
-Version: 4.1.0
+Version: 4.1.0.9000
 Type: Package
 Title: Computation of the Balance-Sample Size Frontier in Matching Methods for Causal Inference
 Authors@R: c(
@@ -21,14 +21,14 @@ URL: https://projects.iq.harvard.edu/frontier, https://iqss.github.io/MatchingFr
 BugReports: https://github.com/IQSS/MatchingFrontier/issues
 Depends: R (>= 4.0.0)
 Imports: 
-    MatchIt (>= 4.4.0),
+    MatchIt (>= 4.5.4),
     ggplot2 (>= 3.3.5),
     scales (>= 1.1.1),
     sandwich (>= 3.0-1),
     backports (>= 1.4.1),
     pbapply
 Suggests: 
-    lmtest (>= 0.9-38),
+    marginaleffects,
     segmented (>= 1.3-4),
     knitr,
     rmarkdown
