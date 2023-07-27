@@ -1,9 +1,16 @@
 makeMatchedData <- function(data, matched.to = NULL, drop.inds = NULL, weights = ".weights",
-                            dup = FALSE, with_replacement = TRUE, subclass = ".subclass", id = ".id") {
+                            dup = FALSE, with_replacement = TRUE, drop = TRUE, subclass = ".subclass", id = ".id") {
   if (is.null(matched.to)) {
-    if (length(drop.inds) > 0) data <- data[-drop.inds,,drop=FALSE]
-
     data[[weights]] <- 1
+
+    if (length(drop.inds) > 0) {
+      if (drop) {
+        data <- data[-drop.inds,,drop=FALSE]
+      }
+      else {
+        data[[weights]][drop.inds] <- 0
+      }
+    }
 
     attr(data, "weights") <- weights
   }
@@ -60,10 +67,14 @@ makeMatchedData <- function(data, matched.to = NULL, drop.inds = NULL, weights =
       }
 
     }
-    data <- data[w > 0,]
+
+    if (drop) {
+      data <- data[w > 0,]
+    }
 
     attr(data, "weights") <- weights
     if (!with_replacement) attr(data, "subclass") <- subclass
   }
-  return(data)
+
+  data
 }
