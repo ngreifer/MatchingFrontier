@@ -78,5 +78,5 @@ generateDataset <- function(frontier.object, N, Ndrop, weights = "weights",
     class(d) <- c("matchdata", class(d))
   }
 
-  return(d)
+  d
 }

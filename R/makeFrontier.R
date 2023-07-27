@@ -1,10 +1,11 @@
 makeFrontier <- function(x, ...) {
   UseMethod("makeFrontier")
 }
+
 makeFrontier.data.frame <- function(x, treatment, match.on, QOI = 'FSATT',
                                     metric = 'dist', breaks = NULL,
                                     distance.mat = NULL, ratio = NULL,
-                                    verbose = TRUE, ...){
+                                    verbose = TRUE, ...) {
 
   call <- match.call()
   call[[1]] <- quote(makeFrontier)
@@ -52,7 +53,7 @@ makeFrontier.formula <- function(formula, data, QOI = 'FSATT',
 
   checkDat(data, treatment, match.on)
 
-  data[[treatment]] <- binarize(data[[treatment]])
+  # data[[treatment]] <- binarize(data[[treatment]])
 
   makeFrontier_internal(data, treatment, match.on, formula, QOI,
                         processed_metric, call, ratio, verbose)
@@ -107,7 +108,7 @@ makeFrontier_internal <- function(data, treatment, match.on, formula, QOI = 'FSA
 
   class(out) <- c(paste0(attr(metric, "type"), "Frontier"), "matchFrontier")
 
-  return(out)
+  out
 }
 
 print.matchFrontier <- function(x, ...){

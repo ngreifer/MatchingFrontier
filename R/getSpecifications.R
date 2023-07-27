@@ -17,7 +17,7 @@ getSpecifications <- function(base.form, covariates, data, N){
         #Add polynomials to model
         covs <- sample(covariates, sample(seq_along(covariates), 1))
         cov.polys <- vapply(setdiff(covs, no.poly.covs), function(cov) {
-            if (sample(c(TRUE, FALSE), 1)) paste0("I(", cov, "^2) + I(", cov, "^3)")
+            if (rbinom(1, 1, .5) == 1) paste0("I(", cov, "^2) + I(", cov, "^3)")
             else paste0("I(", cov, "^2)")
         }, character(1L))
 
