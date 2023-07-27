@@ -274,8 +274,10 @@ poly_ <- function(x, ..., degree = 1, coefs = NULL, raw = FALSE, simple = FALSE)
 #Process data to be safe for fitting model and getting predictable results without error
 process_safe_for_model <- function(data, formula = NULL) {
 
-  if (is.null(formula)) vars <- names(data)
-  else vars <- all.vars(formula)
+  vars <- {
+    if (is.null(formula)) names(data)
+    else all.vars(formula)
+  }
 
   for (i in vars) {
     nu <- length(unique(data[[i]]))
@@ -283,11 +285,12 @@ process_safe_for_model <- function(data, formula = NULL) {
     else if (nu == 2L) data[[i]] <- binarize(data[[i]])
     else if (is.character(data[[i]]) || is.factor(data[[i]])) data[[i]] <- factor(data[[i]])
   }
+
   data
 }
 
 #Safely compute robust SE CIs when there are non-finite entries in meat
-#by using simpler variance
+#by using simpler variance; No longer used
 safe_ci <- function(fit, treatment, vcov. = sandwich::vcovHC, type = "HC3", alpha = .05, ...) {
 
   v <- vcov.(fit, type = type, ...)
@@ -313,7 +316,7 @@ safe_ci <- function(fit, treatment, vcov. = sandwich::vcovHC, type = "HC3", alph
   get.ci(fit, treatment, alpha, v)
 }
 
-#Port of lmtest::coef.ci() but simplified
+#Port of lmtest::coef.ci() but simplified; No longer used
 get.ci <- function(fit, par, alpha = 0.05, vcov) {
   est <- coef(fit)
   se <- sqrt(diag(vcov))
