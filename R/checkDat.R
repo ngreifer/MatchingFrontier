@@ -33,7 +33,8 @@ checkDat <- function(data, treatment, match.on){
     }
 
     # Check treatment
-    if (length(unique(data[[treatment]])) != 2) {
-        customStop('the treatment must be a binary variable (ideally 0/1).', 'makeFrontier()')
+    if (!is.numeric(data[[treatment]]) ||
+        !all(data[[treatment]] %in% c(0, 1))) {
+        customStop('the treatment must be a binary (0/1) variable.', 'makeFrontier()')
     }
 }
