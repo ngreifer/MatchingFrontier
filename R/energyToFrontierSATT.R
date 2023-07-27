@@ -9,10 +9,6 @@ energyToFrontierSATT <- function(distance.mat, treat.vec, verbose, ratio = NA) {
   treated.ind <- ind[treat.vec == 1]
   control.ind <- ind[treat.vec == 0]
 
-  ind.in.vec <- integer(N)
-  ind.in.vec[treated.ind] <- seq_along(treated.ind)
-  ind.in.vec[control.ind] <- seq_along(control.ind)
-
   #Compute each unit's contribution to energy dist
   #Find unit that contributes maximally to energy distance
   #Remove that unit
