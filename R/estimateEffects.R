@@ -41,6 +41,7 @@ estimateEffects <- function(frontier.object,
     base.form <- as.formula(base.form)
     outcome <- all.vars(base.form)[1]
   }
+
   if (!all(setdiff(all.vars(base.form), c(outcome, treatment)) %in% covariates)) {
     customWarning("not all covariates in 'base.form' were matched on in the original call to makeFrontier().", "estimateEffects()")
   }
@@ -157,7 +158,7 @@ estimateEffects <- function(frontier.object,
   res <- pbapply::pblapply(c(0L, seq_along(point.inds)), function(i) {
     if (i == 0L) {
       out <- estOneEffect(base.form, frontier.object$data, treatment,
-                             alpha = alpha)
+                          alpha = alpha, QOI = frontier.object$QOI)
 
       if (method != "none") {
         suppressWarnings({
@@ -188,7 +189,7 @@ estimateEffects <- function(frontier.object,
                           subclass = if (!is.null(attr(matched.data, "subclass"))) {
                             matched.data[[attr(matched.data, "subclass")]]
                           },
-                          alpha = alpha)
+                          alpha = alpha, QOI = frontier.object$QOI)
 
       if (method != "none") {
         suppressWarnings({
@@ -252,13 +253,14 @@ estimateEffects <- function(frontier.object,
   }
 
   class(out) <- "frontierEstimates"
-  return(out)
+  out
 }
 
 print.frontierEstimates <- function(x, ...){
   cat("A frontierEstimates object\n")
   cat(paste0("- quantity of interest: ", x$QOI, "\n"))
-  cat(paste0("- model sensitivity method: ", switch(x$method, "none" = "none",
+  cat(paste0("- model sensitivity method: ", switch(x$method,
+                                                    "none" = "none",
                                                     "extreme-bounds" = "extreme bounds",
                                                     "athey-imbens" = "Athey-Imbens"),
              "\n"))
