@@ -9,6 +9,7 @@ modelDependence <- function(base.form = NULL,
                             specifications = NULL,
                             cutpoints = NULL,
                             cutpoint.method = c("mean", "median", "segmented"),
+                            QOI = "FSATT",
                             verbose = TRUE,
                             seed = NULL) {
 
@@ -59,6 +60,14 @@ modelDependence <- function(base.form = NULL,
   }
   if (!all(covariates %in% names(data))) {
     customStop("all covariates must be present in 'data'.", 'modelDependence()')
+  }
+
+  if (length(QOI) != 1 || !is.character(QOI)) {
+    customStop("'QOI' must be a string.", 'modelDependence()')
+  }
+  QOI <- try(match_arg(toupper(QOI), c("SATE", "FSATE", "SATT", "FSATT")), silent = TRUE)
+  if (inherits(QOI, "try-error")){
+    customStop("'QOI' must be either 'SATE', 'FSATE', 'SATT', or 'FSATT'.", 'modelDependence()')
   }
 
   method <- match_arg(method)
@@ -140,6 +149,7 @@ modelDependenceInternal <- function(data,
                                     method = c("extreme-bounds", "athey-imbens"),
                                     specifications = NULL,
                                     cutpoints = NULL,
+                                    QOI = "FSATT",
                                     verbose = TRUE) {
 
   method <- match_arg(method)
@@ -147,18 +157,18 @@ modelDependenceInternal <- function(data,
   base.coef <- estOneEffect(base.form, data = data,
                             treatment = treatment,
                             # subclass = data$.subclass, id = data$.id,
-                            weights = weights, alpha = NULL)["Estimate"]
+                            weights = weights, alpha = NULL, QOI = QOI)["Estimate"]
 
   if (method == "extreme-bounds") {
     #Needs specifications
     coef.dist <- vapply(specifications, function(s) {
-      formula <- as.formula(s)
+      formula <- update(as.formula(s), . ~ .)
       # run model
       est <- estOneEffect(formula, data = data,
                           treatment = treatment, weights = weights,
                           # subclass = data$.subclass, id = data$.id,
-                          alpha = NULL)
-      return(est["Estimate"])
+                          alpha = NULL, QOI = QOI)
+      est["Estimate"]
     }, numeric(1L))
 
     out <- quantile(coef.dist, c(.05, .95))
@@ -194,7 +204,8 @@ modelDependenceInternal <- function(data,
 
         d.est <- estOneEffect(this.form, data = d,
                               treatment = treatment,
-                              weights = w, alpha = NULL)["Estimate"]
+                              weights = w, alpha = NULL,
+                              QOI = QOI)["Estimate"]
 
         return(d.est * (nrow(d)/N))
       }, numeric(1L)))
@@ -222,7 +233,7 @@ modelDependenceInternal <- function(data,
 
   class(out) <- c("modelDependenceBounds", "numeric")
 
-  return(out)
+  out
 }
 
 print.modelDependenceBounds <- function(x, ...) {
@@ -258,7 +269,8 @@ plot.modelDependenceBounds <- function(x, ...) {
          y = "Count")
   }
   else if (method == "athey-imbens") {
-    d <- data.frame(Var = factor(c(names(est), "Original"), levels = c("Original", names(est)[order(est, decreasing = FALSE)])),
+    d <- data.frame(Var = factor(c(names(est), "Original"),
+                                 levels = c("Original", names(est)[order(est, decreasing = FALSE)])),
                     Est = c(est, base.est))
 
     p <- ggplot(data = d) +
